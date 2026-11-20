@@ -4,7 +4,8 @@
 window.KN_CONFIG = {
   SUPABASE_URL: 'https://nfwjybmniwrlmhjjwgln.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_KAqSHG0qc9b5_lPGGmzhbA_Z1AQOiGQ',
-  WAJIB_GOOGLE_UNTUK_KTM: true, // harus sama dengan c_wajib_google di schema.sql
+  LOGIN_GOOGLE: false,          // true = tampilkan tombol login Google
+  WAJIB_GOOGLE_UNTUK_KTM: false, // harus sama dengan c_wajib_google di schema.sql
   JUMLAH_BOT: 10,              // bot mahasiswa supaya kampus tidak sepi (0 = mati)
   POS_PER_DETIK: 3             // seberapa sering posisi dikirim saat bergerak (hemat kuota Realtime)
 };

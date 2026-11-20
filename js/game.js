@@ -825,6 +825,7 @@
   var GOOGLE_SVG = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
   function googleBtn(text, onclick) { var b = el('button', { cls: 'btn google', onclick: onclick }); b.innerHTML = GOOGLE_SVG; b.appendChild(document.createTextNode(text)); return b; }
   function needGoogle() { return net.mode === 'online' && CFG.WAJIB_GOOGLE_UNTUK_KTM && me.isAnon; }
+  function googleOn() { return net.mode === 'online' && CFG.LOGIN_GOOGLE !== false && me.isAnon; }
 
   var PANELS = {
     info: function (b) {
@@ -866,7 +867,8 @@
         var go = needGoogle() ? googleBtn('Bikin KTM dengan Google', function () { submit(go); }) : el('button', { cls: 'btn wide', text: 'Bikin KTM 🎓', onclick: function () { submit(go); } });
         b.appendChild(go);
         if (needGoogle()) b.appendChild(el('p', { cls: 'muted', style: 'margin-top:8px', text: 'Akun Google menjaga KTM-mu tetap aman walau ganti HP. Sebelum itu kamu tetap bisa jalan-jalan sebagai tamu.' }));
-        if (net.mode === 'online' && me.isAnon) {
+        if (net.mode === 'online' && !googleOn()) b.appendChild(el('p', { cls: 'muted', style: 'margin-top:8px', text: 'KTM tersimpan di browser ini. Jangan hapus data browser supaya KTM-mu tidak hilang.' }));
+        if (googleOn()) {
           b.appendChild(el('div', { cls: 'divider', text: '— sudah punya KTM? —' }));
           b.appendChild(googleBtn('Masuk dengan Google', function () { net.loginGoogle().catch(function (e) { toast(Net.errMsg(e)); }); }));
         }
@@ -939,11 +941,12 @@
       });
     },
     akun: function (b) {
-      var status = net.mode === 'demo' ? 'Mode demo (offline) — mahasiswa lain adalah bot' : (me.isAnon ? 'Masuk sebagai tamu' : 'Masuk dengan Google' + (me.email ? ' (' + me.email + ')' : ''));
+      var status = net.mode === 'demo' ? 'Mode demo (offline) — mahasiswa lain adalah bot' : (me.isAnon ? 'Terhubung ke kampus' : 'Masuk dengan Google' + (me.email ? ' (' + me.email + ')' : ''));
       b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: me.label }), el('p', { text: me.profile ? (JMAP[me.profile.jurusan].nama + ' · NIM ' + me.profile.nim) : 'Belum punya KTM' }), el('div', { cls: 'meta', text: status })]));
-      if (net.mode === 'online' && me.isAnon) b.appendChild(googleBtn('Masuk dengan Google', function () { net.loginGoogle().catch(function (e) { toast(Net.errMsg(e)); }); }));
+      if (googleOn()) b.appendChild(googleBtn('Masuk dengan Google', function () { net.loginGoogle().catch(function (e) { toast(Net.errMsg(e)); }); }));
       b.appendChild(el('div', { cls: 'row', style: 'margin:10px 0' }, [el('button', { cls: 'btn alt', text: soundOn ? '🔊 Suara: nyala' : '🔇 Suara: mati', onclick: function () { $('soundBtn').click(); refreshPanel(); } })]));
-      if (me.profile || !me.isAnon) {
+      if (net.mode === 'online' && me.isAnon && me.profile) b.appendChild(el('p', { cls: 'muted', text: 'KTM-mu tersimpan di browser ini. Kalau data browser dihapus atau ganti HP, KTM tidak bisa dikembalikan.' }));
+      if ((me.profile || !me.isAnon) && !(net.mode === 'online' && me.isAnon)) {
         var out = el('button', { cls: 'btn alt wide', text: 'Keluar' });
         var armed = 0;
         out.onclick = function () {

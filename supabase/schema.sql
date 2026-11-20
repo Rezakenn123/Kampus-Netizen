@@ -32,8 +32,8 @@ security definer
 set search_path = public
 as $$
 declare
-  -- ubah ke false kalau tamu (tanpa Google) boleh bikin KTM
-  c_wajib_google constant boolean := true;
+  -- true = wajib hubungkan Google dulu sebelum bikin KTM
+  c_wajib_google constant boolean := false;
   v_uid   uuid := auth.uid();
   v_nama  text := btrim(regexp_replace(coalesce(p_nama, ''), '\s+', ' ', 'g'));
   v_kode  text;
