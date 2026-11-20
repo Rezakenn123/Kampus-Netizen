@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#2f4a3a">
+<title>Kampus Netizen</title>
+<style>
+  :root{
+    --green:#2f4a3a; --green2:#3f6650; --cream:#fffaf0; --cream2:#f6eedc; --brown:#8a6240;
+    --ink:#1f2a24; --muted:#6c7a70; --gold:#f2c94c; --red:#e2483d;
+    --font: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#7fb069;font-family:var(--font);color:var(--ink);touch-action:none;user-select:none;-webkit-user-select:none}
+  canvas#game{position:fixed;inset:0;display:block}
+  button{font-family:inherit;cursor:pointer}
+
+  /* ---------- top bar ---------- */
+  #topbar{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 14px 12px;background:var(--green);color:#fff;display:flex;align-items:center;gap:10px;z-index:5;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+  #topbar h1{margin:0;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:22px;font-weight:900;letter-spacing:.2px;white-space:nowrap}
+  #clock{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+  #online{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
+  #online i{width:9px;height:9px;border-radius:50%;background:#5ee07a;display:inline-block;box-shadow:0 0 0 3px rgba(94,224,122,.25)}
+  #datetime{font-size:15px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
+  #phase{background:#ffe9a8;color:#7a5a12;font-size:12px;font-weight:900;letter-spacing:2px;padding:2px 12px;border-radius:999px;white-space:nowrap}
+  #ktpBtn{flex:0 0 auto;background:var(--cream);color:var(--ink);border:3px solid var(--brown);border-radius:12px;padding:8px 12px;font-weight:900;font-size:14px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- cards & controls ---------- */
+  .card{background:var(--cream);border:3px solid var(--brown);border-radius:16px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+  #wargaCard{position:fixed;left:12px;top:calc(env(safe-area-inset-top) + 84px);padding:10px 16px;z-index:4;pointer-events:none}
+  #wargaCard small{display:block;font-size:12px;font-weight:900;letter-spacing:3px;color:var(--brown)}
+  #wargaCard b{display:block;font-size:34px;font-weight:900;line-height:1.05}
+  #wargaCard span{font-size:11px;color:var(--muted)}
+  #rightCtl{position:fixed;right:10px;top:calc(env(safe-area-inset-top) + 84px);display:flex;flex-direction:column;gap:10px;z-index:4}
+  .ctl{width:56px;height:56px;border-radius:14px;background:var(--cream);border:3px solid var(--brown);box-shadow:0 3px 0 rgba(0,0,0,.18);font-size:26px;font-weight:900;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+  .ctl.small{font-size:13px}
+  .ctl:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+  #chatTab{position:fixed;left:-14px;top:52%;transform:translateY(-50%);background:var(--green);color:#fff;border:none;border-radius:0 40px 40px 0;padding:16px 14px 14px 26px;font-weight:900;font-size:11px;letter-spacing:1px;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:4;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+  #chatTab svg{width:26px;height:26px}
+
+  /* ---------- joystick ---------- */
+  #joy{position:fixed;left:20px;bottom:calc(env(safe-area-inset-bottom) + 96px);width:150px;height:150px;border-radius:50%;background:rgba(40,60,50,.35);border:3px solid rgba(255,255,255,.35);z-index:4;touch-action:none}
+  #knob{position:absolute;left:50%;top:50%;width:76px;height:76px;margin:-38px 0 0 -38px;border-radius:50%;background:var(--cream);border:4px solid var(--brown);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+  #joyLabel{position:fixed;left:20px;width:150px;text-align:center;bottom:calc(env(safe-area-inset-bottom) + 76px);color:#fff;font-weight:900;letter-spacing:2px;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.6);z-index:4;pointer-events:none}
+
+  /* ---------- bottom nav ---------- */
+  #nav{position:fixed;left:0;right:0;bottom:0;background:var(--cream);border-top:1px solid #e5dccb;display:flex;justify-content:space-around;padding:8px 6px calc(env(safe-area-inset-bottom) + 8px);z-index:6}
+  #nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;color:#8f978f;font-weight:800;font-size:12px;padding:6px 10px;border-radius:16px;position:relative;min-width:54px}
+  #nav button svg{width:24px;height:24px}
+  #nav button.active{color:var(--green)}
+  #nav button.active .ico{background:var(--green);color:#fff}
+  #nav .ico{width:56px;height:34px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+  #nav .dot{position:absolute;top:2px;right:12px;width:10px;height:10px;background:var(--red);border-radius:50%;display:none}
+
+  /* ---------- sheet (panel) ---------- */
+  #sheet{position:fixed;left:0;right:0;bottom:0;max-height:78%;background:var(--cream);border-radius:22px 22px 0 0;z-index:7;transform:translateY(105%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:0 -6px 24px rgba(0,0,0,.25);padding-bottom:env(safe-area-inset-bottom)}
+  #sheet.open{transform:none}
+  #sheetHead{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
+  #sheetHead h2{margin:0;font-size:20px;font-weight:900}
+  #sheetClose{width:36px;height:36px;border-radius:50%;border:none;background:#ece3d0;font-size:18px;font-weight:900}
+  #sheetBody{overflow:auto;padding:4px 18px 18px;touch-action:pan-y;user-select:text;-webkit-user-select:text}
+  .item{background:#fff;border:2px solid #eadfca;border-radius:14px;padding:12px 14px;margin:8px 0}
+  .item h3{margin:0 0 4px;font-size:15px}
+  .item p{margin:0;font-size:14px;color:#3f4a43;line-height:1.4}
+  .meta{font-size:12px;color:var(--muted);margin-top:4px}
+  .row{display:flex;gap:8px;align-items:center}
+  .row>*{flex:1}
+  input[type=text],input[type=number]{width:100%;font:inherit;font-size:16px;padding:12px 14px;border:2px solid #d9cdb4;border-radius:12px;background:#fff;outline:none}
+  input:focus{border-color:var(--green2)}
+  .btn{background:var(--green);color:#fff;border:none;border-radius:12px;padding:12px 16px;font-weight:900;font-size:15px}
+  .btn.alt{background:#ece3d0;color:var(--ink)}
+  .btn.small{padding:8px 12px;font-size:13px;flex:0 0 auto}
+  .muted{color:var(--muted);font-size:13px}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;background:#ece3d0;font-size:12px;font-weight:800}
+  .ktp{background:linear-gradient(135deg,#cfe4f7,#a9cdee);border:2px solid #6c9cc8;border-radius:16px;padding:14px 16px;color:#16324a;position:relative;overflow:hidden}
+  .ktp .t{font-weight:900;letter-spacing:1.5px;font-size:13px;text-align:center;margin-bottom:10px}
+  .ktp table{border-collapse:collapse;font-size:14px}
+  .ktp td{padding:2px 6px 2px 0;vertical-align:top}
+  .ktp td:first-child{font-weight:800;white-space:nowrap}
+  .ktp .photo{position:absolute;right:14px;top:44px;width:62px;height:76px;border-radius:8px;background:#e8f1fa;border:2px solid #6c9cc8;display:flex;align-items:center;justify-content:center;font-size:34px}
+  #chatLog{max-height:44vh;overflow:auto}
+  .msg{padding:6px 0;border-bottom:1px solid #efe6d4;font-size:14px}
+  .msg b{margin-right:6px}
+
+  .jgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+  .jbtn{border:2px solid #e2d6bf;background:#fff;border-radius:14px;padding:10px;text-align:left;font-weight:800;font-size:14px;display:flex;gap:8px;align-items:center;color:var(--ink)}
+  .jbtn .e{font-size:22px}
+  .jbtn small{display:block;font-weight:600;color:var(--muted);font-size:11px}
+  .jbtn.sel{border-color:var(--jc);box-shadow:0 0 0 3px color-mix(in srgb,var(--jc) 30%,transparent);background:color-mix(in srgb,var(--jc) 9%,#fff)}
+  .btn.google{background:#fff;color:#1f1f1f;border:2px solid #d6d6d6;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+  .btn.wide{width:100%}
+  .ktm{border-radius:16px;padding:14px 16px;color:#fff;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--jc),color-mix(in srgb,var(--jc) 55%,#000))}
+  .ktm .t{font-weight:900;letter-spacing:1.5px;font-size:12px;opacity:.95}
+  .ktm .u{font-weight:900;font-size:18px;margin:2px 0 10px}
+  .ktm table{border-collapse:collapse;font-size:14px}
+  .ktm td{padding:2px 8px 2px 0;vertical-align:top}
+  .ktm td:first-child{opacity:.8;white-space:nowrap}
+  .ktm .photo{position:absolute;right:14px;top:50px;width:64px;height:78px;border-radius:10px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:34px}
+  .ktm .bar{position:absolute;right:-30px;bottom:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .jdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .divider{text-align:center;color:var(--muted);font-size:12px;margin:12px 0 8px}
+  textarea{width:100%;font:inherit;font-size:15px;padding:12px 14px;border:2px solid #d9cdb4;border-radius:12px;background:#fff;outline:none;resize:vertical;min-height:70px}
+  #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 92px);transform:translateX(-50%);background:rgba(31,42,36,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;z-index:9;max-width:88%;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+  #toast.show{opacity:1}
+  @media (max-width:420px){
+    #topbar h1{font-size:18px} #datetime{font-size:13px} #ktpBtn{font-size:13px;padding:7px 9px}
+    #wargaCard b{font-size:28px} .ctl{width:50px;height:50px}
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="topbar">
+  <h1>Kampus Netizen</h1>
+  <div id="clock">
+    <div id="online"><i></i><span id="onlineTxt">… mahasiswa online</span></div>
+    <div id="datetime">—</div>
+    <div id="phase">—</div>
+  </div>
+  <button id="ktpBtn">Bikin KTM</button>
+</div>
+
+<div id="wargaCard" class="card">
+  <small>MAHASISWA</small>
+  <b id="wargaNum">0</b>
+  <span id="wargaUpd">—</span>
+</div>
+
+<div id="rightCtl">
+  <button class="ctl" id="zoomIn" aria-label="Perbesar">+</button>
+  <button class="ctl" id="zoomOut" aria-label="Perkecil">−</button>
+  <button class="ctl small" id="nearBtn">Dekat</button>
+  <button class="ctl" id="soundBtn" aria-label="Suara">🔇</button>
+  <button class="ctl" id="homeBtn" aria-label="Ke fakultas">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+  </button>
+</div>
+
+<button id="chatTab">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  CHAT
+</button>
+
+<div id="joy"><div id="knob"></div></div>
+<div id="joyLabel">Gerak</div>
+
+<nav id="nav">
+  <button data-tab="peta" class="active"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg></span>Peta</button>
+  <button data-tab="info"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10v4h3l6 4V6L6 10H3zM16 9a4 4 0 0 1 0 6"/></svg></span>Info<i class="dot" id="infoDot"></i></button>
+  <button data-tab="ktm"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.5 1.7-2 3-2s2.4.5 3 2M14 10h4M14 13h4"/></svg></span>KTM</button>
+  <button data-tab="jurusan"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2 2 10 2 12 0v-5M22 9v6"/></svg></span>Jurusan</button>
+  <button data-tab="kantin"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11h18a9 9 0 0 1-18 0zM8 7c0-1.5 1-1.5 1-3M12 7c0-1.5 1-1.5 1-3M16 7c0-1.5 1-1.5 1-3M8 20h8"/></svg></span>Kantin</button>
+  <button data-tab="akun"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.5 2 3.2-.3.8 3.1 2.6 1.9-1.3 2.9 1.3 2.9-2.6 1.9-.8 3.1-3.2-.3L12 21l-2.5-2-3.2.3-.8-3.1L2.9 14.3 4.2 11.4 2.9 8.5l2.6-1.9.8-3.1 3.2.3z"/><path d="m9 12 2 2 4-4"/></svg></span>Akun</button>
+</nav>
+
+<div id="sheet">
+  <div id="sheetHead"><h2 id="sheetTitle">—</h2><button id="sheetClose" aria-label="Tutup">✕</button></div>
+  <div id="sheetBody"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+window.KN_CONFIG = { SUPABASE_URL: '', SUPABASE_ANON_KEY: '' };
+</script>
+<script>
+/*
+ * world.js — peta Kampus Netizen + data jurusan + bot.
+ * Peta & bot dihitung dari seed dan jam, jadi semua pemain melihat hal yang sama
+ * tanpa perlu server game (cocok untuk Vercel + Supabase).
+ */
+(function (root) {
+  'use strict';
+
+  var N = 72;
+  var T = { GRASS: 0, ROAD: 1, WATER: 2, FIELD: 3, FOREST: 4, PAVE: 5, BANK: 6 };
+  var ROADS = [6, 25, 46, 65];
+
+  var JURUSAN = [
+    { id: 'komunikasi', nama: 'Ilmu Komunikasi', fak: 'Fak. Ilmu Komunikasi', kode: '01', color: '#e8833a', emoji: '🎙️' },
+    { id: 'informatika', nama: 'Informatika', fak: 'Fak. Informatika', kode: '02', color: '#2f6fd6', emoji: '💻' },
+    { id: 'manajemen', nama: 'Manajemen', fak: 'Fak. Ekonomi & Bisnis', kode: '03', color: '#2e9b5f', emoji: '📈' },
+    { id: 'kesehatan', nama: 'Kesehatan', fak: 'Fak. Ilmu Kesehatan', kode: '04', color: '#16a3a0', emoji: '🩺' },
+    { id: 'kedokteran', nama: 'Kedokteran', fak: 'Fak. Kedokteran', kode: '05', color: '#c8323a', emoji: '⚕️' },
+    { id: 'ngepunk', nama: 'Ngepunk', fak: 'Fak. Ngepunk', kode: '06', color: '#e0338f', emoji: '🤘' }
+  ];
+  var JMAP = {}; JURUSAN.forEach(function (j) { JMAP[j.id] = j; });
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hash2(x, y) {
+    var h = (x * 374761393 + y * 668265263) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+
+  function generate() {
+    var rnd = mulberry32(2026);
+    var tiles = new Uint8Array(N * N), blocked = new Uint8Array(N * N);
+    var objects = [], deco = [], fakultas = {};
+    function idx(x, y) { return y * N + x; }
+    function inb(x, y) { return x >= 0 && y >= 0 && x < N && y < N; }
+    function set(x, y, t) { if (inb(x, y)) tiles[idx(x, y)] = t; }
+    function get(x, y) { return inb(x, y) ? tiles[idx(x, y)] : -1; }
+    function fill(x0, y0, w, h, t) { for (var y = y0; y < y0 + h; y++) for (var x = x0; x < x0 + w; x++) set(x, y, t); }
+    function block(x0, y0, w, h) { for (var y = y0; y < y0 + h; y++) for (var x = x0; x < x0 + w; x++) if (inb(x, y)) blocked[idx(x, y)] = 1; }
+    function bld(o) { o.type = 'building'; objects.push(o); block(o.x, o.y, o.w, o.h); return o; }
+    function prop(o) { objects.push(o); if (o.solid) block(Math.floor(o.x), Math.floor(o.y), 1, 1); return o; }
+
+    // 1) dasar: rumput, taman kota di tepi, danau di kanan
+    for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+      var t = T.GRASS;
+      if (x < 5 || y < 5) t = T.FOREST;
+      var lakeEdge = 67 + Math.sin(y / 5) * 1.2 + Math.sin(y / 2.3) * 0.5;
+      if (y > 14 && y < 62 && x > lakeEdge) t = T.WATER;
+      else if (y > 13 && y < 63 && x > lakeEdge - 1.1) t = T.BANK;
+      set(x, y, t);
+    }
+
+    // 2) jalan kampus (grid) + boulevard ke gerbang
+    for (var i = 0; i < ROADS.length; i++) for (var k = 6; k <= 65; k++) { set(ROADS[i], k, T.ROAD); set(k, ROADS[i], T.ROAD); }
+    for (var by = 46; by < N; by++) { set(35, by, T.ROAD); set(36, by, T.ROAD); }
+
+    // 3) Rektorat + Bundaran (tengah)
+    fill(26, 26, 20, 20, T.PAVE);
+    for (var gy = 26; gy < 46; gy++) for (var gx = 26; gx < 46; gx++) {
+      var d = Math.hypot(gx + 0.5 - 36, gy + 0.5 - 40);
+      if (d > 3 && d < 5.2) set(gx, gy, T.GRASS);           // taman bundaran
+      if ((gx < 28 || gx > 43) && gy > 33) set(gx, gy, T.GRASS);
+    }
+    bld({ kind: 'rektorat', name: '🏛️ Rektorat', x: 30, y: 28, w: 12, h: 5, wall: '#f2ede2', roof: '#8a3b2a', band: '#c9a227', height: 66, roofType: 'hip' });
+    prop({ type: 'fountain', x: 36, y: 40, solid: true });
+    prop({ type: 'flag', x: 31.5, y: 35.5 }); prop({ type: 'flag', x: 40.5, y: 35.5 });
+    deco.push({ type: 'circle', x: 36, y: 40, r: 1.6, color: '#7fb2d6' });
+
+    // 4) Fakultas
+    function fak(jid, x, y, w, h, extra) {
+      var j = JMAP[jid];
+      var o = bld(Object.assign({ kind: 'fakultas', jurusan: jid, name: j.emoji + ' ' + j.fak, x: x, y: y, w: w, h: h, wall: '#f4f1ea', roof: shade(j.color, -0.25), band: j.color, height: 50, roofType: 'flat' }, extra || {}));
+      fill(x - 2, y + h, w + 4, 3, T.PAVE);
+      fakultas[jid] = { x: x + w / 2, y: y + h + 1.2 };
+      return o;
+    }
+    fak('komunikasi', 10, 11, 10, 4);
+    prop({ type: 'dish', x: 21.5, y: 9.5 });
+    fak('informatika', 30, 11, 12, 4, { glass: true });
+    prop({ type: 'antenna', x: 43.5, y: 10.5 });
+    fak('manajemen', 51, 11, 10, 4, { height: 58 });
+    fak('kesehatan', 10, 29, 10, 4);
+    prop({ type: 'cross', x: 21.6, y: 30.5, color: '#16a3a0' });
+    fak('kedokteran', 51, 28, 10, 4, { height: 56 });
+    bld({ kind: 'rs', name: '🏥 RS Pendidikan', x: 51, y: 37, w: 7, h: 4, wall: '#ffffff', roof: '#b9c3c9', band: '#c8323a', height: 40, roofType: 'flat' });
+    fill(49, 41, 11, 2, T.PAVE);
+    prop({ type: 'ambulance', x: 60.5, y: 42 });
+    fak('ngepunk', 10, 49, 9, 4, { wall: '#3a3a3f', roof: '#1f1f22', height: 44, punk: true });
+    fill(10, 56, 11, 7, T.PAVE);
+    bld({ kind: 'stage', name: '🎸 Panggung', x: 13, y: 57, w: 5, h: 3, wall: '#2b2b2b', roof: '#e0338f', height: 7, roofType: 'flat' });
+    prop({ type: 'speaker', x: 12.4, y: 58.5 }); prop({ type: 'speaker', x: 18.6, y: 58.5 });
+
+    // 5) Kantin & Perpustakaan (kiri-kanan boulevard)
+    fill(26, 47, 9, 18, T.PAVE);
+    var stallColors = ['#e24b3b', '#3f8fd0', '#f0b429', '#4caf50'];
+    for (var s = 0; s < 4; s++) bld({ kind: 'stall', name: s === 0 ? '🍜 Kantin' : '', x: 27 + s * 2, y: 48, w: 2, h: 1, wall: '#d9c6a0', roof: stallColors[s], height: 12, roofType: 'hip' });
+    for (var ty = 52; ty <= 61; ty += 3) for (var tx = 27.5; tx <= 33.5; tx += 3) prop({ type: 'table', x: tx, y: ty, color: stallColors[(tx + ty) % 4 | 0] });
+    fill(37, 47, 9, 18, T.PAVE);
+    bld({ kind: 'perpus', name: '📚 Perpustakaan', x: 38, y: 49, w: 7, h: 6, wall: '#efe8d8', roof: '#3d5a80', band: '#3d5a80', height: 46, roofType: 'flat' });
+    for (var bb = 0; bb < 3; bb++) prop({ type: 'bench', x: 39 + bb * 2.2, y: 57.5 });
+
+    // 6) Lapangan & Masjid
+    fill(48, 48, 16, 11, T.FIELD);
+    deco.push({ type: 'pitch', x0: 49, y0: 49, x1: 63, y1: 58 });
+    prop({ type: 'goal', x: 49.2, y: 53.5 }); prop({ type: 'goal', x: 62.8, y: 53.5 });
+    bld({ kind: 'masjid', name: '🕌 Masjid Kampus', x: 51, y: 60, w: 5, h: 4, wall: '#f5f2e8', roof: '#2e8b57', height: 30, roofType: 'hip' });
+
+    // 7) Gerbang & parkiran
+    fill(26, 66, 9, 5, T.PAVE); fill(37, 66, 9, 5, T.PAVE);
+    for (var my = 67; my <= 69; my += 2) for (var mx = 27; mx <= 33; mx += 1.5) prop({ type: 'motor', x: mx, y: my + 0.5, color: ['#d63031', '#0984e3', '#2d3436', '#fdcb6e'][(mx * 2 + my) % 4 | 0] });
+    prop({ type: 'gate', x: 34.6, y: 69, x2: 37.4 });
+    block(34, 69, 1, 1); block(37, 69, 1, 1);
+    prop({ type: 'sign', x: 40, y: 67.5, name: '🅿️ Parkiran' });
+
+    // 8) lampu jalan di boulevard
+    for (var ly = 48; ly <= 64; ly += 4) { prop({ type: 'lamp', x: 34.6, y: ly + 0.5 }); prop({ type: 'lamp', x: 37.4, y: ly + 0.5 }); }
+
+    // 9) pohon
+    for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+      if (blocked[idx(xx, yy)]) continue;
+      var tile = get(xx, yy), r = rnd();
+      var nearRoad = get(xx - 1, yy) === T.ROAD || get(xx + 1, yy) === T.ROAD || get(xx, yy - 1) === T.ROAD || get(xx, yy + 1) === T.ROAD;
+      if (tile === T.FOREST && r < 0.5) prop({ type: 'tree', kind: r < 0.3 ? 'pine' : 'round', x: xx + 0.5, y: yy + 0.5, s: 0.8 + rnd() * 0.5 });
+      else if (tile === T.GRASS && nearRoad && (xx + yy) % 4 === 0 && !nearBlocked(xx, yy)) prop({ type: 'tree', kind: 'round', x: xx + 0.5, y: yy + 0.5, s: 0.75 + rnd() * 0.3 });
+      else if (tile === T.GRASS && !nearRoad && r < 0.06 && !nearBlocked(xx, yy)) prop({ type: 'tree', kind: rnd() < 0.4 ? 'palm' : 'round', x: xx + 0.5, y: yy + 0.5, s: 0.8 + rnd() * 0.4 });
+      else if (tile === T.BANK && r < 0.12) prop({ type: 'tree', kind: 'palm', x: xx + 0.5, y: yy + 0.5, s: 0.9 + rnd() * 0.3 });
+    }
+    function nearBlocked(x, y) {
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) if (inb(x + dx, y + dy) && blocked[idx(x + dx, y + dy)]) return true;
+      return false;
+    }
+    for (var q = 0; q < N * N; q++) if (tiles[q] === T.WATER) blocked[q] = 1;
+
+    return {
+      N: N, T: T, tiles: tiles, blockedMap: blocked, objects: objects, deco: deco, fakultas: fakultas,
+      spawn: { x: 36.5, y: 44.5 }, gate: { x: 35.9, y: 67.5 },
+      tileAt: function (x, y) { return get(x | 0, y | 0); },
+      isBlocked: function (x, y) {
+        if (x < 0.3 || y < 0.3 || x > N - 0.3 || y > N - 0.3) return true;
+        return blocked[idx(x | 0, y | 0)] === 1;
+      }
+    };
+  }
+
+  function shade(hex, amt) {
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    if (amt < 0) { r *= 1 + amt; g *= 1 + amt; b *= 1 + amt; } else { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+    return '#' + ((1 << 24) + ((r | 0) << 16) + ((g | 0) << 8) + (b | 0)).toString(16).slice(1);
+  }
+
+  // Cuaca berganti tiap 20 menit, sama untuk semua pemain
+  function weatherAt(ms) {
+    var r = hash2(Math.floor(ms / (20 * 60 * 1000)), 7);
+    return r < 0.3 ? 'HUJAN' : r < 0.6 ? 'BERAWAN' : 'CERAH';
+  }
+
+  // ---------------- Bot berbasis waktu ----------------
+  // Posisi bot = fungsi dari jam, jadi semua HP melihat bot di tempat yang sama.
+  var NAMES = ['Raka', 'Nadia', 'Bima', 'Salsa', 'Dimas', 'Aulia', 'Fikri', 'Zahra', 'Rizal', 'Keisha', 'Bayu', 'Tiara', 'Gilang', 'Nayla', 'Farhan', 'Citra', 'Yoga', 'Anisa', 'Reza', 'Putri', 'Ilham', 'Dinda', 'Arya', 'Vina', 'Kevin', 'Laras', 'Hanif', 'Sekar'];
+  var LINES = ['Ada yang udah KRS-an?', 'Dosennya telat lagi 😅', 'Kantin yuk 🍜', 'Perpus rame banget', 'Tugas numpuk 😭', 'Anak Ngepunk konser di panggung 🤘', 'Semangat UTS!', 'Wifi kampus lemot', 'Siapa mau mabar?', 'Halo maba 👋', 'Parkiran penuh', 'Neduh dulu, hujan', 'Info beasiswa dong', 'Ngopi di kantin?', 'Ada Dekan lewat, rapihin baju', 'Praktikum jam berapa?', 'Lapangan kosong, main bola yuk ⚽', 'Salam kenal semua'];
+  var REKTOR_LINES = ['Selamat datang di Kampus Netizen! 🎓', 'Jangan lupa isi KRS tepat waktu ya.', 'Perpustakaan buka sampai jam 9 malam.', 'Anak Ngepunk, volumenya dikecilin dikit 😅', 'Bangga sama mahasiswa semua!', 'Para Dekan, rapat di Rektorat jam 2.', 'Jaga kebersihan kampus ya.'];
+
+  function nodePos(i, j) { return [ROADS[i] + 0.5, ROADS[j] + 0.5]; }
+  var LOOPS = [
+    [[32.5, 36.5], [40.5, 36.5], [40.5, 43.5], [32.5, 43.5]],     // bundaran
+    [[27.5, 51.5], [33.5, 51.5], [33.5, 62.5], [27.5, 62.5]],     // kantin
+    [[48.5, 48.5], [63.5, 48.5], [63.5, 58.5], [48.5, 58.5]],     // lapangan
+    [[37.5, 56.5], [45.5, 56.5], [45.5, 63.5], [37.5, 63.5]],     // depan perpus
+    [[9.5, 63.5], [20.5, 63.5], [20.5, 55.5], [9.5, 55.5]]        // panggung
+  ];
+
+  function buildSegs(points, rnd, speed, pauseChance) {
+    var segs = [], total = 0;
+    for (var i = 0; i < points.length; i++) {
+      var a = points[i], b = points[(i + 1) % points.length];
+      if (rnd() < pauseChance) { var pd = 2 + rnd() * 5; segs.push({ x0: a[0], y0: a[1], x1: a[0], y1: a[1], t0: total, dur: pd }); total += pd; }
+      var len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (len > 0.01) { var dd = len / speed; segs.push({ x0: a[0], y0: a[1], x1: b[0], y1: b[1], t0: total, dur: dd }); total += dd; }
+    }
+    return { segs: segs, total: total };
+  }
+
+  function makeBots(count, opts) {
+    opts = opts || {};
+    var rnd = mulberry32(777), bots = [];
+    for (var i = 0; i < count; i++) {
+      var pts;
+      if (i % 3 === 2) {
+        pts = LOOPS[(i / 3 | 0) % LOOPS.length].map(function (p) { return [p[0] + (rnd() - 0.5) * 1.5, p[1] + (rnd() - 0.5) * 1.5]; });
+      } else {
+        var ci = (rnd() * 4) | 0, cj = (rnd() * 4) | 0, path = [[ci, cj]], prev = null;
+        for (var s = 0; s < 9; s++) {
+          var nb = [[ci + 1, cj], [ci - 1, cj], [ci, cj + 1], [ci, cj - 1]].filter(function (n) { return n[0] >= 0 && n[0] < 4 && n[1] >= 0 && n[1] < 4 && !(prev && n[0] === prev[0] && n[1] === prev[1]); });
+          var n = nb[(rnd() * nb.length) | 0]; prev = [ci, cj]; ci = n[0]; cj = n[1]; path.push([ci, cj]);
+        }
+        var back = path.slice(1, -1).reverse();
+        var lane = (rnd() - 0.5) * 0.45;
+        pts = path.concat(back).map(function (p) { var q = nodePos(p[0], p[1]); return [q[0] + lane, q[1] + lane]; });
+      }
+      var speed = 1.3 + rnd() * 0.8;
+      var built = buildSegs(pts, rnd, speed, 0.35);
+      var guest = rnd() < 0.2;
+      var jur = JURUSAN[(rnd() * JURUSAN.length) | 0].id;
+      var dekan = !!opts.dekan && i < JURUSAN.length;
+      if (dekan) jur = JURUSAN[i].id;
+      bots.push({
+        id: 'bot' + i, bot: true, segs: built.segs, total: built.total, phase: rnd() * built.total,
+        name: guest ? 'Tamu ' + Math.floor(rnd() * 1679616).toString(36).toUpperCase() : NAMES[i % NAMES.length],
+        jurusan: guest ? null : jur, role: dekan ? 'dekan' : (guest ? 'tamu' : 'mahasiswa'),
+        chatPeriod: 35 + rnd() * 70, chatPhase: rnd() * 100, lines: LINES
+      });
+    }
+    return bots;
+  }
+
+  function makeRektor() {
+    var rnd = mulberry32(42);
+    var pts = [[36, 33.6], [36, 35.5], [33, 36.5], [33, 43.5], [39.5, 43.5], [39.5, 36.5], [36, 35.5]];
+    var built = buildSegs(pts, rnd, 1.1, 0.6);
+    return { id: 'rektor-npc', bot: true, npc: true, segs: built.segs, total: built.total, phase: 0, name: 'Pak Rektor', role: 'rektor', jurusan: null, chatPeriod: 40, chatPhase: 3, lines: REKTOR_LINES };
+  }
+
+  function botState(b, tSec) {
+    var u = ((tSec + b.phase) % b.total + b.total) % b.total;
+    var segs = b.segs, lo = 0, hi = segs.length - 1;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (segs[mid].t0 <= u) lo = mid; else hi = mid - 1; }
+    var s = segs[lo], f = s.dur > 0 ? (u - s.t0) / s.dur : 0;
+    return { x: s.x0 + (s.x1 - s.x0) * f, y: s.y0 + (s.y1 - s.y0) * f, moving: s.x0 !== s.x1 || s.y0 !== s.y1, dx: s.x1 - s.x0, dy: s.y1 - s.y0 };
+  }
+
+  // Bot "ngomong" selama 6 detik di setiap periode; teks dipilih dari jam juga
+  function botChat(b, tSec) {
+    var v = tSec + b.chatPhase, k = Math.floor(v / b.chatPeriod);
+    if (v - k * b.chatPeriod > 6) return null;
+    var idx = Math.floor(hash2(k, b.id.length * 31 + b.chatPeriod | 0) * b.lines.length);
+    return { key: k, text: b.lines[idx] };
+  }
+
+  var World = { generate: generate, JURUSAN: JURUSAN, JMAP: JMAP, weatherAt: weatherAt, makeBots: makeBots, makeRektor: makeRektor, botState: botState, botChat: botChat, mulberry32: mulberry32, hash2: hash2, shade: shade };
+  if (typeof module !== 'undefined' && module.exports) module.exports = World; else root.World = World;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+/*
+ * net.js — lapisan jaringan.
+ *  - SupaNet: Supabase (Auth tamu + Google, Realtime presence/broadcast, Postgres)
+ *  - DemoNet: tanpa server, semua disimpan di browser
+ * Keduanya punya method yang sama, jadi game.js tidak peduli sedang pakai yang mana.
+ */
+(function () {
+  'use strict';
+
+  function lget(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function lset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+  function ldel(k) { try { localStorage.removeItem(k); } catch (e) { } }
+  function errMsg(e) {
+    var m = (e && (e.message || e.error_description || e.msg)) || String(e);
+    if (/Failed to fetch|NetworkError/i.test(m)) return 'Koneksi bermasalah, coba lagi';
+    if (/manual linking/i.test(m)) return 'Aktifkan "Manual Linking" di Supabase Auth dulu';
+    if (/identity.*already/i.test(m)) return 'Akun Google ini sudah punya KTM. Pakai "Masuk dengan Google".';
+    if (/provider is not enabled/i.test(m)) return 'Login Google belum diaktifkan di Supabase';
+    if (/anonymous sign-ins are disabled/i.test(m)) return 'Aktifkan "Anonymous sign-ins" di Supabase Auth';
+    return m;
+  }
+  function guestOf(id) { return 'Tamu ' + String(id).replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase(); }
+
+  // =====================================================================
+  // Supabase
+  // =====================================================================
+  function SupaNet(cfg, H) {
+    var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    var user = null, profile = null, ch = null;
+    var known = new Set(), metaQueue = new Set(), metaTimer = null, metaWaiters = {};
+    var api = { mode: 'online', guestOf: guestOf };
+    function redirectTo() { return location.origin + location.pathname; }
+    function selfInfo() {
+      var email = user && user.email;
+      if (!email && user && user.identities) user.identities.forEach(function (i) { if (i.identity_data && i.identity_data.email) email = i.identity_data.email; });
+      return { id: user.id, isAnon: !!user.is_anonymous, email: email || null, guestName: guestOf(user.id) };
+    }
+
+    api.start = async function () {
+      // error dari redirect Google (mis. akun Google sudah dipakai)
+      var q = new URLSearchParams(location.search + '&' + location.hash.replace(/^#/, ''));
+      var urlErr = q.get('error_description');
+      if (urlErr) { ldel('kn_pending_ktm'); setTimeout(function () { H.toast(errMsg({ message: urlErr })); }, 600); history.replaceState(null, '', redirectTo()); }
+
+      var r = await sb.auth.getSession();
+      var session = r.data && r.data.session;
+      if (!session) {
+        var a = await sb.auth.signInAnonymously();
+        if (a.error) throw a.error;
+        session = a.data.session;
+      }
+      user = session.user;
+      sb.auth.onAuthStateChange(function (ev, s) {
+        if (!s) return;
+        if (user && s.user.id !== user.id) { location.reload(); return; }
+        user = s.user; H.onSelf(selfInfo());
+      });
+      H.onSelf(selfInfo());
+      await loadProfile();
+
+      // lanjutkan pendaftaran KTM yang tertunda karena pindah ke halaman Google
+      var pend = lget('kn_pending_ktm');
+      if (pend) {
+        ldel('kn_pending_ktm');
+        if (!profile && !user.is_anonymous) {
+          try { await api.daftarKTM(pend.nama, pend.jurusan); } catch (e) { H.toast(errMsg(e)); H.openKTM(); }
+        }
+      }
+      joinChannel();
+      loadKantin(); loadPengumuman(); loadChatHistory(); refreshStats();
+      setInterval(refreshStats, 60000);
+    };
+
+    async function loadProfile() {
+      var r = await sb.from('mahasiswa').select('*').eq('id', user.id).maybeSingle();
+      if (r.error) { H.toast(errMsg(r.error)); return; }
+      profile = r.data || null;
+      H.onProfile(profile);
+    }
+
+    function joinChannel() {
+      ch = sb.channel('kampus-netizen', { config: { presence: { key: user.id }, broadcast: { self: false } } });
+      ch.on('presence', { event: 'sync' }, function () {
+        var st = ch.presenceState(), ids = Object.keys(st);
+        H.onOnline(ids.length);
+        ids.forEach(function (id) { if (id !== user.id && !known.has(id)) { known.add(id); H.onPeerJoin(id); requestMeta(id); } });
+        known.forEach(function (id) { if (!st[id]) { known.delete(id); H.onPeerLeave(id); } });
+      });
+      ch.on('broadcast', { event: 'p' }, function (m) { var p = m.payload; if (p && p.i !== user.id) H.onPeerPos(p.i, +p.x, +p.y, +p.vx || 0, +p.vy || 0); });
+      ch.on('broadcast', { event: 'hi' }, function () { H.onHello(); });
+      ch.on('broadcast', { event: 'ktm' }, function (m) { if (m.payload && m.payload.i) requestMeta(m.payload.i); refreshStats(); });
+      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, function (m) {
+        var row = m.new; if (!row || row.user_id === user.id) return;
+        ensureMeta(row.user_id).then(function () { H.onChat(row.user_id, row.teks, Date.parse(row.created_at), false); });
+      });
+      ch.on('postgres_changes', { event: '*', schema: 'public', table: 'kantin' }, function () { clearTimeout(api._kt); api._kt = setTimeout(loadKantin, 300); });
+      ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pengumuman' }, function () { loadPengumuman(true); });
+      ch.subscribe(function (status) {
+        if (status === 'SUBSCRIBED') {
+          ch.track({ t: Date.now() });
+          ch.send({ type: 'broadcast', event: 'hi', payload: {} });
+          H.onConnected(true);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          H.onConnected(false);
+        }
+      });
+    }
+
+    // ambil data KTM pemain lain (dikumpulkan dulu supaya 1 query untuk banyak orang)
+    function requestMeta(id) {
+      metaQueue.add(id);
+      clearTimeout(metaTimer);
+      metaTimer = setTimeout(flushMeta, 150);
+    }
+    function ensureMeta(id) {
+      if (H.hasMeta(id)) return Promise.resolve();
+      return new Promise(function (res) { (metaWaiters[id] = metaWaiters[id] || []).push(res); requestMeta(id); });
+    }
+    async function flushMeta() {
+      var ids = Array.from(metaQueue); metaQueue.clear();
+      if (!ids.length) return;
+      var r = await sb.from('mahasiswa').select('id,nama,jurusan,nim,is_dekan,role').in('id', ids);
+      var found = {};
+      (r.data || []).forEach(function (row) { found[row.id] = row; });
+      ids.forEach(function (id) {
+        H.onPeerMeta(id, found[id] || null);
+        (metaWaiters[id] || []).forEach(function (f) { f(); }); delete metaWaiters[id];
+      });
+    }
+
+    async function refreshStats() {
+      var r = await sb.from('mahasiswa').select('id', { count: 'exact', head: true });
+      if (!r.error) H.onMahasiswaCount(r.count || 0);
+    }
+    async function loadKantin() {
+      var r = await sb.from('kantin').select('id,barang,harga,created_at,user_id,mahasiswa(nama,jurusan)').order('created_at', { ascending: false }).limit(50);
+      if (r.error) return;
+      H.onKantin(r.data.map(function (k) {
+        return { id: k.id, barang: k.barang, harga: k.harga, at: Date.parse(k.created_at), seller: k.mahasiswa ? k.mahasiswa.nama : '?', jurusan: k.mahasiswa ? k.mahasiswa.jurusan : null, mine: k.user_id === user.id };
+      }));
+    }
+    async function loadPengumuman(isNew) {
+      var r = await sb.from('pengumuman').select('id,judul,isi,created_at').order('created_at', { ascending: false }).limit(20);
+      if (!r.error) H.onPengumuman(r.data.map(function (p) { return { judul: p.judul, isi: p.isi, at: Date.parse(p.created_at) }; }), !!isNew);
+    }
+    async function loadChatHistory() {
+      var r = await sb.from('chat').select('user_id,teks,created_at').order('created_at', { ascending: false }).limit(30);
+      if (r.error || !r.data.length) return;
+      var rows = r.data.reverse();
+      await Promise.all(rows.map(function (x) { return x.user_id === user.id ? null : ensureMeta(x.user_id); }));
+      rows.forEach(function (x) { H.onChat(x.user_id, x.teks, Date.parse(x.created_at), true); });
+    }
+
+    api.daftarKTM = async function (nama, jurusan) {
+      if (cfg.WAJIB_GOOGLE_UNTUK_KTM && user.is_anonymous) {
+        lset('kn_pending_ktm', { nama: nama, jurusan: jurusan });
+        var l = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: redirectTo() } });
+        if (l.error) { ldel('kn_pending_ktm'); throw l.error; }
+        return null; // browser pindah ke Google, lalu kembali ke sini
+      }
+      var r = await sb.rpc('daftar_ktm', { p_nama: nama, p_jurusan: jurusan });
+      if (r.error) throw r.error;
+      profile = r.data;
+      H.onProfile(profile, true);
+      if (ch) ch.send({ type: 'broadcast', event: 'ktm', payload: { i: user.id } });
+      refreshStats();
+      return profile;
+    };
+    api.loginGoogle = async function () {
+      var r = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectTo() } });
+      if (r.error) throw r.error;
+    };
+    api.logout = async function () { await sb.auth.signOut(); location.reload(); };
+    api.sendPos = function (x, y, vx, vy) {
+      if (ch) ch.send({ type: 'broadcast', event: 'p', payload: { i: user.id, x: +x.toFixed(2), y: +y.toFixed(2), vx: +vx.toFixed(2), vy: +vy.toFixed(2) } });
+    };
+    api.sendChat = async function (teks) {
+      var r = await sb.from('chat').insert({ teks: teks });
+      if (r.error) throw r.error;
+    };
+    api.jual = async function (barang, harga) {
+      var r = await sb.from('kantin').insert({ barang: barang, harga: harga });
+      if (r.error) throw r.error;
+      loadKantin();
+    };
+    api.hapusJualan = async function (id) {
+      var r = await sb.from('kantin').delete().eq('id', id);
+      if (r.error) throw r.error;
+      loadKantin();
+    };
+    api.postPengumuman = async function (judul, isi) {
+      var r = await sb.from('pengumuman').insert({ judul: judul, isi: isi });
+      if (r.error) throw r.error;
+      loadPengumuman(true);
+    };
+    api.statJurusan = async function () {
+      var r = await sb.rpc('statistik_jurusan');
+      if (r.error) throw r.error;
+      return r.data;
+    };
+    return api;
+  }
+
+  // =====================================================================
+  // Demo (tanpa Supabase)
+  // =====================================================================
+  function DemoNet(cfg, H) {
+    var api = { mode: 'demo', guestOf: guestOf };
+    var guestId = lget('kn_guest') || Math.random().toString(36).slice(2, 10);
+    lset('kn_guest', guestId);
+    var profile = lget('kn_profile');
+    var kantin = lget('kn_kantin') || [
+      { id: 1, barang: 'Kopi susu gula aren', harga: 12000, seller: 'Nadia', jurusan: 'manajemen', at: Date.now() - 3600e3 },
+      { id: 2, barang: 'Jasa servis laptop', harga: 50000, seller: 'Bima', jurusan: 'informatika', at: Date.now() - 7200e3 },
+      { id: 3, barang: 'Kaos band bekas, masih bagus', harga: 35000, seller: 'Raka', jurusan: 'ngepunk', at: Date.now() - 86400e3 },
+      { id: 4, barang: 'Catatan Anatomi lengkap', harga: 25000, seller: 'Zahra', jurusan: 'kedokteran', at: Date.now() - 2 * 86400e3 }
+    ];
+    var pengumuman = lget('kn_pengumuman') || [
+      { judul: 'Selamat datang di Kampus Netizen! 🎓', isi: 'Bikin KTM dan pilih jurusanmu. Mahasiswa pertama di tiap jurusan otomatis jadi Dekan.', at: Date.now() },
+      { judul: 'Pekan orientasi maba', isi: 'Kumpul di Bundaran depan Rektorat. Jangan lupa bawa almamater.', at: Date.now() - 86400e3 },
+      { judul: 'Konser kampus 🤘', isi: 'Fakultas Ngepunk bikin konser di Panggung malam Minggu.', at: Date.now() - 2 * 86400e3 }
+    ];
+    function mine(list) { return list.map(function (k) { return Object.assign({}, k, { mine: profile && k.seller === profile.nama }); }); }
+    function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+    api.start = async function () {
+      H.onSelf({ id: 'me', isAnon: true, email: null, guestName: guestOf(guestId) });
+      H.onProfile(profile);
+      H.onMahasiswaCount(1280 + (profile ? 1 : 0));
+      H.onKantin(mine(kantin)); H.onPengumuman(pengumuman, true);
+      H.onConnected(true);
+    };
+    api.daftarKTM = async function (nama, jurusan) {
+      await wait(250);
+      nama = String(nama).replace(/\s+/g, ' ').trim();
+      if (nama.length < 2 || nama.length > 20) throw new Error('Nama harus 2–20 huruf');
+      var j = World.JMAP[jurusan]; if (!j) throw new Error('Pilih jurusan dulu');
+      profile = { id: 'me', nama: nama, jurusan: jurusan, nim: String(new Date().getFullYear()).slice(2) + j.kode + String(200 + ((Math.random() * 700) | 0)).padStart(5, '0'), angkatan: new Date().getFullYear(), is_dekan: false, role: 'mahasiswa', created_at: new Date().toISOString() };
+      lset('kn_profile', profile);
+      H.onProfile(profile, true);
+      H.onMahasiswaCount(1281);
+      return profile;
+    };
+    api.loginGoogle = async function () { throw new Error('Mode demo: login Google aktif setelah Supabase dipasang'); };
+    api.logout = async function () { ldel('kn_profile'); location.reload(); };
+    api.sendPos = function () { };
+    api.sendChat = async function () { };
+    api.jual = async function (barang, harga) {
+      if (kantin.filter(function (k) { return profile && k.seller === profile.nama; }).length >= 5) throw new Error('Maksimal 5 barang per mahasiswa');
+      kantin.unshift({ id: Date.now(), barang: barang, harga: harga, seller: profile.nama, jurusan: profile.jurusan, at: Date.now() });
+      lset('kn_kantin', kantin.slice(0, 50)); H.onKantin(mine(kantin));
+    };
+    api.hapusJualan = async function (id) { kantin = kantin.filter(function (k) { return k.id !== id; }); lset('kn_kantin', kantin); H.onKantin(mine(kantin)); };
+    api.postPengumuman = async function (judul, isi) { pengumuman.unshift({ judul: judul, isi: isi, at: Date.now() }); lset('kn_pengumuman', pengumuman); H.onPengumuman(pengumuman, true); };
+    api.statJurusan = async function () {
+      var base = { komunikasi: 241, informatika: 318, manajemen: 287, kesehatan: 176, kedokteran: 129, ngepunk: 129 };
+      if (profile) base[profile.jurusan]++;
+      return World.JURUSAN.map(function (j) { var b = H.demoDekan(j.id); return { jurusan: j.id, jumlah: base[j.id], dekan: b }; });
+    };
+    return api;
+  }
+
+  window.Net = {
+    create: function (cfg, hooks) {
+      var useSupa = cfg && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase && window.supabase.createClient;
+      return useSupa ? SupaNet(cfg, hooks) : DemoNet(cfg || {}, hooks);
+    },
+    errMsg: errMsg
+  };
+})();
+
+</script>
+<script>
+/*
+ * game.js — klien Kampus Netizen (Vanilla JS + Canvas)
+ */
+(function () {
+  'use strict';
+
+  var CFG = window.KN_CONFIG || {};
+  var world = World.generate();
+  var N = world.N, T = world.T, JMAP = World.JMAP;
+  var HW = 32, HH = 16;
+
+  // ---------- util ----------
+  var $ = function (id) { return document.getElementById(id); };
+  function P(x, y, z) { return [(x - y) * HW, (x + y) * HH - (z || 0)]; }
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function strHash(s) { var h = 0; s = String(s); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  var shade = World.shade;
+  function el(tag, props, kids) {
+    var e = document.createElement(tag);
+    if (props) for (var k in props) {
+      var v = props[k];
+      if (v == null) continue;
+      if (k === 'text') e.textContent = v;
+      else if (k === 'cls') e.className = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v);
+    }
+    (kids || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function rupiah(n) { return 'Rp' + Number(n || 0).toLocaleString('id-ID'); }
+  var DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  function wib(ms) { return new Date((ms || Date.now()) + 7 * 3600 * 1000); }
+  function fmtDate(ms) { var d = wib(ms); return DAYS[d.getUTCDay()] + ', ' + d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+  function fmtTime(ms) { var d = wib(ms); return pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()); }
+  function hourWIB() { if (window.KN_HOUR != null) return window.KN_HOUR; var d = wib(); return d.getUTCHours() + d.getUTCMinutes() / 60; }
+  function nowSec() { return Date.now() / 1000; }
+
+  var SHIRTS = ['#e85d4a', '#3f8fd0', '#f0b429', '#4caf50', '#9b59b6', '#e67e22', '#1abc9c', '#ec6f9b', '#34495e'];
+  var SKINS = ['#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+  var UMBRELLAS = ['#e24b3b', '#3f8fd0', '#f0b429', '#7d3c98', '#2e8b57', '#ec6f9b'];
+
+  // ---------- identitas & label ----------
+  // meta: null = tamu, atau {nama, jurusan, role, is_dekan}
+  function labelOf(meta, guestName) {
+    if (!meta) return guestName || 'Tamu';
+    if (meta.role === 'rektor') return '👑 Rektor · ' + meta.nama;
+    var j = JMAP[meta.jurusan];
+    if (meta.is_dekan || meta.role === 'dekan') return 'Dekan ' + (j ? j.nama : '') + ' · ' + meta.nama;
+    return meta.nama;
+  }
+  function lookOf(seed, meta) {
+    var h = strHash(seed), j = meta && JMAP[meta.jurusan];
+    return {
+      shirt: meta && meta.role === 'rektor' ? '#1f2330' : (j ? j.color : SHIRTS[h % SHIRTS.length]),
+      skin: SKINS[(h >> 3) % SKINS.length], umb: UMBRELLAS[(h >> 6) % UMBRELLAS.length], phase: (h % 100) / 10,
+      toga: !!(meta && meta.role === 'rektor'), tie: !!(meta && (meta.is_dekan || meta.role === 'dekan'))
+    };
+  }
+  function applyMeta(p, meta) {
+    p.meta = meta; p.jurusan = meta ? meta.jurusan : null;
+    p.name = meta ? meta.nama : p.guestName;
+    p.label = labelOf(meta, p.guestName);
+    p.look = lookOf(p.id, meta);
+  }
+
+  // ---------- canvas ----------
+  var canvas = $('game'), ctx = canvas.getContext('2d');
+  var W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  }
+  window.addEventListener('resize', resize); resize();
+
+  // ---------- state ----------
+  var me = { id: 'me', x: world.spawn.x, y: world.spawn.y, guestName: 'Tamu', dir: 1, moving: false, isMe: true, isAnon: true, email: null, profile: null };
+  applyMeta(me, null);
+  var peers = new Map();    // id -> pemain sungguhan lain
+  var metas = new Map();    // id -> meta
+  var bots = World.makeBots(CFG.SUPABASE_URL ? (CFG.JUMLAH_BOT | 0) : 28, { dekan: !CFG.SUPABASE_URL });
+  bots.forEach(function (b) { b.guestName = b.name; applyMeta(b, b.jurusan ? { nama: b.name, jurusan: b.jurusan, role: b.role } : null); b.lastChatKey = null; });
+  var rektor = World.makeRektor();
+  rektor.guestName = rektor.name; applyMeta(rektor, { nama: 'Pak Rektor', role: 'rektor' }); rektor.lastChatKey = null;
+  var stats = { mahasiswa: 0, online: 1, updated: Date.now() };
+  var kantin = [], pengumuman = [], chatLog = [];
+  var zoom = window.innerWidth < 600 ? 0.62 : 0.9;
+  var connected = false;
+
+  // ---------- jaringan ----------
+  var net = Net.create(CFG, {
+    onSelf: function (s) {
+      var oldId = me.id;
+      me.id = s.id; me.isAnon = s.isAnon; me.email = s.email; me.guestName = s.guestName;
+      if (!me.profile) applyMeta(me, null);
+      if (oldId !== me.id) metas.set(me.id, me.profile);
+      if (currentTab === 'akun' || currentTab === 'ktm') refreshPanel();
+    },
+    onProfile: function (p, isNew) {
+      me.profile = p; applyMeta(me, p); metas.set(me.id, p);
+      $('ktpBtn').textContent = p ? p.nama : 'Bikin KTM';
+      if (p && isNew) {
+        var j = JMAP[p.jurusan];
+        toast(p.is_dekan ? ('Selamat! Kamu Dekan pertama ' + j.nama + ' 🎉') : ('KTM jadi! Selamat datang di ' + j.nama + ' ' + j.emoji));
+        goFakultas(); openPanel('ktm');
+      }
+      if (!placed) { if (p) goFakultas(); placed = true; }
+      if (currentTab) refreshPanel();
+    },
+    onConnected: function (ok) { connected = ok; if (!ok && net.mode === 'online') toast('Koneksi realtime terputus, menyambung ulang…'); },
+    onOnline: function (n) { stats.online = n; },
+    onMahasiswaCount: function (n) { stats.mahasiswa = n; stats.updated = Date.now(); },
+    onPeerJoin: function (id) {
+      if (peers.has(id)) return;
+      var p = { id: id, x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0, t: 0, hasPos: false, dir: 1, guestName: net.guestOf(id) };
+      applyMeta(p, metas.has(id) ? metas.get(id) : null);
+      peers.set(id, p);
+    },
+    onPeerLeave: function (id) { peers.delete(id); },
+    onPeerMeta: function (id, meta) {
+      metas.set(id, meta);
+      var p = peers.get(id); if (p) applyMeta(p, meta);
+      if (currentTab === 'jurusan' || currentTab === 'dekat') refreshPanel();
+    },
+    hasMeta: function (id) { return metas.has(id); },
+    onPeerPos: function (id, x, y, vx, vy) {
+      var p = peers.get(id);
+      if (!p) { this.onPeerJoin(id); p = peers.get(id); }
+      if (!p.hasPos) { p.x = x; p.y = y; }
+      p.px = x; p.py = y; p.vx = clamp(vx, -5, 5); p.vy = clamp(vy, -5, 5); p.t = performance.now(); p.hasPos = true;
+    },
+    onHello: function () { setTimeout(function () { sendPosNow(); }, Math.random() * 1200); },
+    onChat: function (id, text, at, history) {
+      var p = id === me.id ? me : peers.get(id);
+      var meta = metas.get(id);
+      var name = meta ? meta.nama : (p ? p.name : net.guestOf(id));
+      pushChat(name, text, at, meta ? meta.jurusan : null);
+      if (!history && p) p.chat = { text: text, until: Date.now() + 7000 };
+    },
+    onKantin: function (list) { kantin = list; if (currentTab === 'kantin') refreshPanel(); },
+    onPengumuman: function (list, isNew) { pengumuman = list; if (isNew && currentTab !== 'info') $('infoDot').style.display = 'block'; if (currentTab === 'info') refreshPanel(); },
+    toast: function (m) { toast(m); },
+    openKTM: function () { openPanel('ktm'); },
+    demoDekan: function (jid) { var b = bots.find(function (x) { return x.role === 'dekan' && x.jurusan === jid; }); return b ? b.name : null; }
+  });
+  var placed = false;
+
+  function goFakultas() {
+    var f = me.profile ? world.fakultas[me.profile.jurusan] : world.spawn;
+    me.x = f.x; me.y = f.y; camOff.x = camOff.y = 0; sendPosNow();
+  }
+
+  // ---------- chat ----------
+  function pushChat(name, text, at, jurusan) {
+    chatLog.push({ name: name, text: text, at: at || Date.now(), jurusan: jurusan });
+    if (chatLog.length > 80) chatLog.shift();
+    if (currentTab === 'chat') renderChatLog();
+  }
+  var lastChatAt = 0;
+  function sendChat(text) {
+    text = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (!text) return;
+    if (Date.now() - lastChatAt < 1100) { toast('Pelan-pelan ngetiknya 😄'); return; }
+    lastChatAt = Date.now();
+    me.chat = { text: text, until: Date.now() + 7000 };
+    pushChat(me.name, text, Date.now(), me.jurusan);
+    net.sendChat(text).catch(function (e) { toast(Net.errMsg(e)); });
+  }
+
+  // ---------- input ----------
+  var joy = { x: 0, y: 0, id: null };
+  var joyEl = $('joy'), knob = $('knob');
+  function joyMove(e) {
+    var r = joyEl.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var dx = e.clientX - cx, dy = e.clientY - cy, d = Math.sqrt(dx * dx + dy * dy), max = r.width / 2 - 20;
+    if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    joy.x = dx / max; joy.y = dy / max;
+  }
+  joyEl.addEventListener('pointerdown', function (e) { joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId); joyMove(e); unlockAudio(); });
+  joyEl.addEventListener('pointermove', function (e) { if (e.pointerId === joy.id) joyMove(e); });
+  function joyEnd(e) { if (e.pointerId !== joy.id) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; }
+  joyEl.addEventListener('pointerup', joyEnd); joyEl.addEventListener('pointercancel', joyEnd);
+
+  var keys = {};
+  window.addEventListener('keydown', function (e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    keys[e.key.toLowerCase()] = true;
+    if (e.key === 'Enter') { openPanel('chat'); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
+  window.addEventListener('blur', function () { keys = {}; });
+
+  var drag = null, camOff = { x: 0, y: 0 };
+  canvas.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, ox: camOff.x, oy: camOff.y }; canvas.setPointerCapture(e.pointerId); unlockAudio(); });
+  canvas.addEventListener('pointermove', function (e) { if (!drag) return; camOff.x = drag.ox - (e.clientX - drag.x) / zoom; camOff.y = drag.oy - (e.clientY - drag.y) / zoom; });
+  canvas.addEventListener('pointerup', function () { drag = null; });
+  canvas.addEventListener('wheel', function (e) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); }, { passive: false });
+  function setZoom(z) { zoom = clamp(z, 0.4, 2.2); }
+  $('zoomIn').onclick = function () { setZoom(zoom * 1.2); };
+  $('zoomOut').onclick = function () { setZoom(zoom / 1.2); };
+  $('homeBtn').onclick = function () { if (me.profile) { goFakultas(); toast('Ke ' + JMAP[me.profile.jurusan].fak); } else openPanel('ktm'); };
+  $('nearBtn').onclick = function () { openPanel('dekat'); };
+  $('ktpBtn').onclick = function () { openPanel('ktm'); };
+  $('chatTab').onclick = function () { openPanel('chat'); };
+
+  // ---------- suara hujan ----------
+  var audio = null, soundOn = false;
+  function unlockAudio() { if (audio && audio.ctx.state === 'suspended') audio.ctx.resume(); }
+  function initAudio() {
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    var ac = new AC(), len = ac.sampleRate * 2, buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    var f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1400;
+    var g = ac.createGain(); g.gain.value = 0;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start();
+    return { ctx: ac, gain: g };
+  }
+  $('soundBtn').onclick = function () {
+    soundOn = !soundOn;
+    try { if (soundOn && !audio) audio = initAudio(); unlockAudio(); } catch (e) { }
+    $('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+  };
+
+  // ---------- simulasi ----------
+  var sendAcc = 0, wasMoving = false, vel = { x: 0, y: 0 };
+  var POS_INTERVAL = 1 / Math.max(1, CFG.POS_PER_DETIK || 3);
+  function sendPosNow() { net.sendPos(me.x, me.y, me.moving ? vel.x : 0, me.moving ? vel.y : 0); sendAcc = 0; }
+
+  function update(dt, now) {
+    var jx = joy.x, jy = joy.y;
+    if (keys['arrowleft'] || keys['a']) jx -= 1;
+    if (keys['arrowright'] || keys['d']) jx += 1;
+    if (keys['arrowup'] || keys['w']) jy -= 1;
+    if (keys['arrowdown'] || keys['s']) jy += 1;
+    var m = Math.sqrt(jx * jx + jy * jy);
+    var ox = me.x, oy = me.y;
+    if (m > 0.15) {
+      if (m > 1) { jx /= m; jy /= m; m = 1; }
+      var wx = jx / HW + jy / HH, wy = jy / HH - jx / HW, wl = Math.sqrt(wx * wx + wy * wy);
+      wx /= wl; wy /= wl;
+      var sp = 3.8 * m * dt, nx = me.x + wx * sp, ny = me.y + wy * sp;
+      if (!world.isBlocked(nx, me.y)) me.x = nx;
+      if (!world.isBlocked(me.x, ny)) me.y = ny;
+      me.moving = true; if (Math.abs(jx) > 0.05) me.dir = jx < 0 ? -1 : 1;
+      camOff.x *= 0.85; camOff.y *= 0.85;
+    } else me.moving = false;
+    if (dt > 0) { vel.x = (me.x - ox) / dt; vel.y = (me.y - oy) / dt; }
+
+    // kirim posisi seperlunya (hemat kuota Realtime)
+    sendAcc += dt;
+    if (me.moving && sendAcc >= POS_INTERVAL) sendPosNow();
+    if (!me.moving && wasMoving) sendPosNow();
+    wasMoving = me.moving;
+
+    // pemain lain: tebak posisi dari kecepatan terakhir lalu haluskan
+    peers.forEach(function (p) {
+      if (!p.hasPos) return;
+      var age = Math.min(0.8, (now - p.t) / 1000);
+      var tx = p.px + p.vx * age, ty = p.py + p.vy * age;
+      if (world.isBlocked(tx, ty)) { tx = p.px; ty = p.py; }
+      var dx = tx - p.x, dy = ty - p.y;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { p.x = tx; p.y = ty; }
+      else { var f = Math.min(1, dt * 8); p.x += dx * f; p.y += dy * f; }
+      p.moving = Math.abs(p.vx) + Math.abs(p.vy) > 0.1 || Math.abs(dx) + Math.abs(dy) > 0.05;
+      var sdx = (p.vx - p.vy) || (dx - dy); if (Math.abs(sdx) > 0.01) p.dir = sdx < 0 ? -1 : 1;
+    });
+
+    // bot & Rektor (posisi dari jam)
+    var t = nowSec();
+    bots.concat([rektor]).forEach(function (b) {
+      var s = World.botState(b, t);
+      b.x = s.x; b.y = s.y; b.moving = s.moving;
+      if (s.moving && Math.abs(s.dx - s.dy) > 0.01) b.dir = (s.dx - s.dy) < 0 ? -1 : 1;
+      var c = World.botChat(b, t);
+      if (c && c.key !== b.lastChatKey) {
+        if (b.lastChatKey !== null && (!b.npc || !realRektorOnline())) pushChat(b.name, c.text, Date.now(), b.jurusan);
+        b.lastChatKey = c.key;
+      }
+      b.chat = c && (!b.npc || !realRektorOnline()) ? { text: c.text, until: Date.now() + 1000 } : null;
+    });
+    if (net.mode === 'demo') stats.online = bots.length + 2;
+  }
+  function realRektorOnline() {
+    if (me.profile && me.profile.role === 'rektor') return true;
+    var found = false; peers.forEach(function (p) { if (p.meta && p.meta.role === 'rektor') found = true; });
+    return found;
+  }
+
+  // ---------- render ----------
+  var tileColor = new Array(N * N), roadDir = new Uint8Array(N * N), tileScreen = new Float32Array(N * N * 2);
+  (function precompute() {
+    var base = {};
+    base[T.GRASS] = [136, 196, 104]; base[T.FOREST] = [104, 160, 86]; base[T.ROAD] = [84, 90, 98];
+    base[T.WATER] = [74, 159, 216]; base[T.FIELD] = [96, 180, 84]; base[T.PAVE] = [214, 206, 190]; base[T.BANK] = [166, 201, 122];
+    for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+      var i = y * N + x, t = world.tiles[i], c = base[t];
+      var v = t === T.FIELD ? (((x + y) & 1) ? 6 : -6) : (World.hash2(x, y) - 0.5) * (t === T.ROAD || t === T.PAVE ? 6 : 14);
+      tileColor[i] = 'rgb(' + ((c[0] + v) | 0) + ',' + ((c[1] + v) | 0) + ',' + ((c[2] + v * 0.6) | 0) + ')';
+      var s = P(x, y); tileScreen[i * 2] = s[0]; tileScreen[i * 2 + 1] = s[1];
+      if (t === T.ROAD) {
+        var ex = world.tileAt(x - 1, y) === T.ROAD && world.tileAt(x + 1, y) === T.ROAD;
+        var ey = world.tileAt(x, y - 1) === T.ROAD && world.tileAt(x, y + 1) === T.ROAD;
+        var wideX = world.tileAt(x - 1, y) === T.ROAD || world.tileAt(x + 1, y) === T.ROAD;
+        roadDir[i] = ex && !ey ? 1 : (ey && !ex && !(x === 35 || x === 36) ? 2 : 0);
+        if (ey && (x === 35 || x === 36) && wideX) roadDir[i] = 0;
+      }
+    }
+    world.objects.forEach(function (o) {
+      var w = o.w || 0, h = o.h || 0;
+      o.cx = o.x + w / 2; o.cy = o.y + h / 2; o.depth = o.cx + o.cy;
+      var s = P(o.cx, o.cy); o.sx = s[0]; o.sy = s[1];
+      o.isBox = o.type === 'building';
+      o.seed = strHash(o.name || o.kind || '') + o.x * 7 + o.y;
+    });
+  })();
+
+  function poly(pts, fill, stroke, lw) {
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+  }
+
+  function drawTiles(vl, vr, vt, vb, now) {
+    var waterShift = Math.sin(now / 700);
+    for (var i = 0; i < N * N; i++) {
+      var sx = tileScreen[i * 2], sy = tileScreen[i * 2 + 1];
+      if (sx + HW < vl || sx - HW > vr || sy + 2 * HH < vt || sy > vb) continue;
+      var t = world.tiles[i], col = tileColor[i];
+      if (t === T.WATER) { var x = i % N, y = (i / N) | 0, w = Math.sin(now / 600 + x * 0.7 + y * 0.5); col = 'rgb(' + (70 + w * 8 | 0) + ',' + (155 + w * 10 | 0) + ',' + (214 + w * 6 | 0) + ')'; }
+      ctx.beginPath();
+      ctx.moveTo(sx, sy); ctx.lineTo(sx + HW, sy + HH); ctx.lineTo(sx, sy + 2 * HH); ctx.lineTo(sx - HW, sy + HH); ctx.closePath();
+      ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 0.8; ctx.stroke();
+      if (t === T.ROAD && roadDir[i]) {
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.4; ctx.beginPath();
+        if (roadDir[i] === 1) { ctx.moveTo(sx - 8, sy + HH - 4); ctx.lineTo(sx + 8, sy + HH + 4); }
+        else { ctx.moveTo(sx + 8, sy + HH - 4); ctx.lineTo(sx - 8, sy + HH + 4); }
+        ctx.stroke();
+      } else if (t === T.PAVE && ((i * 13) % 7 === 0)) {
+        ctx.strokeStyle = 'rgba(150,135,110,.25)'; ctx.lineWidth = 1; ctx.beginPath();
+        ctx.moveTo(sx - 16, sy + HH); ctx.lineTo(sx, sy + HH + 8); ctx.stroke();
+      } else if (t === T.WATER && ((i * 7) % 5 === 0)) {
+        ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.beginPath();
+        ctx.moveTo(sx - 6 + waterShift * 4, sy + HH); ctx.lineTo(sx + 6 + waterShift * 4, sy + HH); ctx.stroke();
+      }
+    }
+    // garis lapangan
+    world.deco.forEach(function (d) {
+      if (d.type === 'pitch') {
+        ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2;
+        var a = P(d.x0, d.y0), b = P(d.x1, d.y0), c = P(d.x1, d.y1), e = P(d.x0, d.y1);
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(e[0], e[1]); ctx.closePath(); ctx.stroke();
+        var mx = (d.x0 + d.x1) / 2, m1 = P(mx, d.y0), m2 = P(mx, d.y1);
+        ctx.beginPath(); ctx.moveTo(m1[0], m1[1]); ctx.lineTo(m2[0], m2[1]); ctx.stroke();
+        var cc = P(mx, (d.y0 + d.y1) / 2); ctx.beginPath(); ctx.ellipse(cc[0], cc[1], 2 * HW * 0.9, 2 * HH * 0.9, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+    });
+  }
+
+  var nightWindows = [];
+  function drawBuilding(o, night) {
+    var x = o.x, y = o.y, w = o.w, h = o.h, Hh = o.height || 16;
+    var A = P(x, y, 0), B = P(x + w, y, 0), C = P(x + w, y + h, 0), D = P(x, y + h, 0);
+    var At = P(x, y, Hh), Bt = P(x + w, y, Hh), Ct = P(x + w, y + h, Hh), Dt = P(x, y + h, Hh);
+    var sh = Math.min(16, Hh * 0.2);
+    poly([C, B, [B[0] + sh * 2, B[1] + sh], [C[0] + sh * 2, C[1] + sh]], 'rgba(0,0,0,.13)');
+    poly([D, C, Ct, Dt], o.wall);
+    poly([C, B, Bt, Ct], shade(o.wall, -0.18));
+    function F(u, z) { return P(x + u * w, y + h, z); }
+    function R(v, z) { return P(x + w, y + v * h, z); }
+
+    if (o.kind !== 'stall' && o.kind !== 'stage') {
+      var floors = Math.max(1, Math.round(Hh / 16)), fh = Hh / floors;
+      var glassCol = o.glass ? '#5f9fd6' : '#87b8dc';
+      var nF = Math.max(2, Math.round(w * 1.2)), nR = Math.max(1, Math.round(h * 1.2));
+      for (var f = 0; f < floors; f++) {
+        var z0 = f * fh + fh * 0.3, z1 = f * fh + fh * (o.glass ? 0.85 : 0.75);
+        for (var k = 0; k < nF; k++) {
+          var u0 = (k + (o.glass ? 0.08 : 0.22)) / nF, u1 = (k + (o.glass ? 0.92 : 0.78)) / nF;
+          if (f === 0 && u1 > 0.42 && u0 < 0.58) continue; // pintu
+          var lit = night && World.hash2(o.seed + k, f) > 0.35;
+          var q = [F(u0, z0), F(u1, z0), F(u1, z1), F(u0, z1)];
+          poly(q, lit ? '#ffd76a' : (night ? '#3a4660' : (o.punk ? '#ff5fb8' : glassCol)));
+          if (lit) nightWindows.push(q);
+        }
+        for (var r = 0; r < nR; r++) {
+          var v0 = (r + 0.25) / nR, v1 = (r + 0.75) / nR;
+          var lit2 = night && World.hash2(o.seed + 50 + r, f) > 0.45;
+          var q2 = [R(v0, z0), R(v1, z0), R(v1, z1), R(v0, z1)];
+          poly(q2, lit2 ? '#e8c45c' : (night ? '#2f3a52' : shade(o.punk ? '#ff5fb8' : glassCol, -0.18)));
+          if (lit2) nightWindows.push(q2);
+        }
+      }
+      var dz = Math.min(15, fh * 0.85);
+      poly([F(0.44, 0), F(0.56, 0), F(0.56, dz), F(0.44, dz)], o.kind === 'masjid' ? '#6d4c2f' : '#4f6f88');
+      if (o.band) {
+        poly([F(0, Hh - 5), F(1, Hh - 5), F(1, Hh), F(0, Hh)], o.band);
+        poly([R(0, Hh - 5), R(1, Hh - 5), R(1, Hh), R(0, Hh)], shade(o.band, -0.2));
+      }
+      if (o.punk) { // grafiti
+        var cols = ['#39ff14', '#00e5ff', '#ffea00', '#ff3ea5'];
+        for (var g = 0; g < 4; g++) {
+          ctx.strokeStyle = cols[g]; ctx.lineWidth = 2; ctx.beginPath();
+          var gu = 0.06 + g * 0.24;
+          for (var s = 0; s <= 6; s++) { var pt = F(gu + s * 0.025, 3 + (s % 2 ? 7 : 1)); if (s) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }
+          ctx.stroke();
+        }
+      }
+      if (o.kind === 'rs') { // palang merah
+        var c0 = F(0.5, Hh - 14);
+        ctx.fillStyle = '#d62f3a'; ctx.fillRect(c0[0] - 2.5, c0[1] - 8, 5, 14); ctx.fillRect(c0[0] - 7, c0[1] - 3, 14, 5);
+      }
+    }
+
+    // atap
+    var roof = o.roof;
+    if (o.roofType === 'flat') {
+      poly([At, Bt, Ct, Dt], shade(roof, 0.05));
+      var e = 0.35;
+      poly([P(x + e, y + e, Hh), P(x + w - e, y + e, Hh), P(x + w - e, y + h - e, Hh), P(x + e, y + h - e, Hh)], shade(roof, -0.12));
+      if (o.kind === 'fakultas' || o.kind === 'perpus') { // AC/tangki di atap
+        var ac = P(x + w * 0.7, y + h * 0.4, Hh);
+        poly([[ac[0] - 6, ac[1]], [ac[0], ac[1] + 3], [ac[0] + 6, ac[1]], [ac[0] + 6, ac[1] - 6], [ac[0], ac[1] - 9], [ac[0] - 6, ac[1] - 6]], '#c9ced3', '#9aa1a8');
+      }
+      if (o.kind === 'stage') {
+        ctx.strokeStyle = '#555'; ctx.lineWidth = 2;
+        [[x, y], [x + w, y], [x, y + h], [x + w, y + h]].forEach(function (c) { var a = P(c[0], c[1], Hh), b = P(c[0], c[1], Hh + 30); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); });
+        var t1 = P(x, y + h, Hh + 30), t2 = P(x + w, y + h, Hh + 30), t3 = P(x + w, y, Hh + 30);
+        ctx.beginPath(); ctx.moveTo(t1[0], t1[1]); ctx.lineTo(t2[0], t2[1]); ctx.lineTo(t3[0], t3[1]); ctx.stroke();
+        var hue = (performance.now() / 20) % 360;
+        ctx.fillStyle = 'hsla(' + hue + ',100%,60%,.85)'; ctx.beginPath(); ctx.arc(t1[0] + (t2[0] - t1[0]) * 0.3, t1[1] + (t2[1] - t1[1]) * 0.3 + 4, 3, 0, 7); ctx.fill();
+        ctx.fillStyle = 'hsla(' + ((hue + 180) % 360) + ',100%,60%,.85)'; ctx.beginPath(); ctx.arc(t1[0] + (t2[0] - t1[0]) * 0.7, t1[1] + (t2[1] - t1[1]) * 0.7 + 4, 3, 0, 7); ctx.fill();
+      }
+    } else {
+      var ee = 0.25, rh = Math.min(w, h) * (o.kind === 'stall' ? 5 : 8);
+      var A2 = P(x - ee, y - ee, Hh), B2 = P(x + w + ee, y - ee, Hh), C2 = P(x + w + ee, y + h + ee, Hh), D2 = P(x - ee, y + h + ee, Hh);
+      var rDark = shade(roof, -0.22), rBack = shade(roof, -0.1);
+      if (w >= h) {
+        var P1 = P(x + h / 2, y + h / 2, Hh + rh), P2 = P(x + w - h / 2, y + h / 2, Hh + rh);
+        poly([A2, B2, P2, P1], rBack); poly([A2, D2, P1], rBack);
+        poly([D2, C2, P2, P1], roof, rDark); poly([B2, C2, P2], rDark);
+      } else {
+        var Q1 = P(x + w / 2, y + w / 2, Hh + rh), Q2 = P(x + w / 2, y + h - w / 2, Hh + rh);
+        poly([A2, D2, Q2, Q1], rBack); poly([A2, B2, Q1], rBack);
+        poly([B2, C2, Q2, Q1], rDark); poly([D2, C2, Q2], roof, rDark);
+      }
+      if (o.kind === 'masjid') {
+        var top = P(x + w / 2, y + h / 2, Hh + rh);
+        ctx.fillStyle = '#d4af37'; ctx.beginPath(); ctx.arc(top[0], top[1] - 4, 9, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#8a6d1d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(top[0], top[1] - 13); ctx.lineTo(top[0], top[1] - 22); ctx.stroke();
+      }
+      if (o.kind === 'rektorat') {
+        var tp = P(x + w / 2, y + h / 2, Hh + rh);
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tp[0], tp[1]); ctx.lineTo(tp[0], tp[1] - 28); ctx.stroke();
+        ctx.fillStyle = '#e02b2b'; ctx.fillRect(tp[0] + 1, tp[1] - 28, 14, 5); ctx.fillStyle = '#fff'; ctx.fillRect(tp[0] + 1, tp[1] - 23, 14, 5);
+      }
+    }
+  }
+
+  function drawTree(o) {
+    var s = P(o.x, o.y), x = s[0], y = s[1], k = o.s || 1;
+    ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.beginPath(); ctx.ellipse(x + 3, y, 10 * k, 4 * k, 0, 0, Math.PI * 2); ctx.fill();
+    if (o.kind === 'pine') {
+      ctx.fillStyle = '#6b4a2b'; ctx.fillRect(x - 1.5 * k, y - 8 * k, 3 * k, 8 * k);
+      for (var i = 0; i < 3; i++) { var by = y - 6 * k - i * 9 * k, bw = (13 - i * 3) * k; poly([[x - bw, by], [x + bw, by], [x, by - 15 * k]], i % 2 ? '#2f6b3a' : '#367a42'); }
+    } else if (o.kind === 'palm') {
+      ctx.strokeStyle = '#8a6a43'; ctx.lineWidth = 2.5 * k; ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 4 * k, y - 14 * k, x + 2 * k, y - 28 * k); ctx.stroke();
+      ctx.strokeStyle = '#3e9a4a'; ctx.lineCap = 'round';
+      var tx = x + 2 * k, ty = y - 28 * k;
+      [[-14, 4], [14, 4], [-10, -6], [10, -6], [0, -10], [-4, 8], [6, 8]].forEach(function (d) { ctx.beginPath(); ctx.moveTo(tx, ty); ctx.quadraticCurveTo(tx + d[0] * k * 0.6, ty + d[1] * k * 0.3 - 6 * k, tx + d[0] * k, ty + d[1] * k); ctx.stroke(); });
+      ctx.lineCap = 'butt';
+    } else {
+      ctx.fillStyle = '#7a5434'; ctx.fillRect(x - 2 * k, y - 12 * k, 4 * k, 12 * k);
+      ctx.fillStyle = '#3f8f3a'; ctx.beginPath(); ctx.arc(x, y - 20 * k, 11 * k, 0, 7); ctx.fill();
+      ctx.fillStyle = '#56a84a'; ctx.beginPath(); ctx.arc(x - 3 * k, y - 23 * k, 7 * k, 0, 7); ctx.fill();
+    }
+  }
+
+  function drawProp(o, now) {
+    var s = P(o.x, o.y), x = s[0], y = s[1];
+    switch (o.type) {
+      case 'flag': {
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 54); ctx.stroke();
+        var wv = Math.sin(now / 300) * 1.5;
+        ctx.fillStyle = '#e02b2b'; ctx.fillRect(x + 1, y - 54, 20, 6 + wv * 0.2); ctx.fillStyle = '#fff'; ctx.fillRect(x + 1, y - 48 + wv * 0.2, 20, 6);
+        break;
+      }
+      case 'fountain': {
+        ctx.fillStyle = '#9fb3c2'; ctx.beginPath(); ctx.ellipse(x, y, 40, 20, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#5fa8dc'; ctx.beginPath(); ctx.ellipse(x, y - 2, 34, 16, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#c8d3db'; ctx.fillRect(x - 3, y - 22, 6, 20);
+        ctx.strokeStyle = 'rgba(220,240,255,.9)'; ctx.lineWidth = 2;
+        for (var i = 0; i < 6; i++) { var a = i / 6 * Math.PI * 2 + now / 900, ex = x + Math.cos(a) * 20, ey = y - 2 + Math.sin(a) * 9; ctx.beginPath(); ctx.moveTo(x, y - 22); ctx.quadraticCurveTo((x + ex) / 2, y - 40, ex, ey); ctx.stroke(); }
+        break;
+      }
+      case 'dish': {
+        ctx.fillStyle = '#888'; ctx.fillRect(x - 1.5, y - 22, 3, 22);
+        ctx.fillStyle = '#eef1f4'; ctx.beginPath(); ctx.ellipse(x, y - 26, 11, 7, -0.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#9aa'; ctx.stroke();
+        break;
+      }
+      case 'antenna': {
+        ctx.strokeStyle = '#b33'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 6, y); ctx.lineTo(x, y - 60); ctx.lineTo(x + 6, y); ctx.stroke();
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1; for (var j = 1; j < 6; j++) { ctx.beginPath(); ctx.moveTo(x - 6 + j, y - j * 10); ctx.lineTo(x + 6 - j, y - j * 10); ctx.stroke(); }
+        if (Math.floor(now / 600) % 2) { ctx.fillStyle = '#ff3b3b'; ctx.beginPath(); ctx.arc(x, y - 61, 3, 0, 7); ctx.fill(); }
+        break;
+      }
+      case 'cross': {
+        ctx.fillStyle = '#666'; ctx.fillRect(x - 1.5, y - 20, 3, 20);
+        ctx.fillStyle = '#fff'; ctx.fillRect(x - 10, y - 38, 20, 20);
+        ctx.fillStyle = o.color || '#d62f3a'; ctx.fillRect(x - 2.5, y - 35, 5, 14); ctx.fillRect(x - 7, y - 30.5, 14, 5);
+        break;
+      }
+      case 'ambulance': {
+        poly([[x - 14, y - 2], [x + 4, y + 7], [x + 14, y + 2], [x - 4, y - 7]], 'rgba(0,0,0,.15)');
+        poly([[x - 14, y - 4], [x + 4, y + 5], [x + 4, y - 9], [x - 14, y - 18]], '#fff', '#bbb');
+        poly([[x + 4, y + 5], [x + 14, y], [x + 14, y - 14], [x + 4, y - 9]], '#e6e6e6', '#bbb');
+        poly([[x - 14, y - 18], [x + 4, y - 9], [x + 14, y - 14], [x - 4, y - 23]], '#f4f4f4', '#bbb');
+        ctx.fillStyle = '#d62f3a'; ctx.fillRect(x - 7, y - 12, 6, 2); ctx.fillRect(x - 5, y - 14, 2, 6);
+        ctx.fillStyle = Math.floor(now / 300) % 2 ? '#ff3b3b' : '#3b7bff'; ctx.fillRect(x - 6, y - 25, 5, 3);
+        break;
+      }
+      case 'speaker': {
+        poly([[x - 6, y], [x + 6, y], [x + 6, y - 18], [x - 6, y - 18]], '#222', '#111');
+        ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(x, y - 6, 3.5, 0, 7); ctx.arc(x, y - 14, 2.5, 0, 7); ctx.fill();
+        break;
+      }
+      case 'table': {
+        ctx.fillStyle = '#8b5a2b'; ctx.beginPath(); ctx.ellipse(x, y - 8, 9, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(x - 1, y - 8, 2, 8);
+        ctx.strokeStyle = '#666'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y - 8); ctx.lineTo(x, y - 28); ctx.stroke();
+        ctx.fillStyle = o.color; ctx.beginPath(); ctx.moveTo(x - 15, y - 22); ctx.quadraticCurveTo(x, y - 36, x + 15, y - 22); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'bench': {
+        poly([[x - 12, y - 6], [x + 4, y + 2], [x + 4, y - 2], [x - 12, y - 10]], '#a0703c', '#6d4c2f');
+        break;
+      }
+      case 'goal': {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        var a1 = P(o.x, o.y - 1.5), b1 = P(o.x, o.y + 1.5);
+        ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a1[0], a1[1] - 16); ctx.lineTo(b1[0], b1[1] - 16); ctx.lineTo(b1[0], b1[1]); ctx.stroke();
+        break;
+      }
+      case 'motor': {
+        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 5, y - 3, 3, 0, 7); ctx.arc(x + 5, y + 1, 3, 0, 7); ctx.fill();
+        poly([[x - 6, y - 6], [x + 5, y - 1], [x + 5, y - 7], [x - 3, y - 11]], o.color);
+        break;
+      }
+      case 'lamp': {
+        ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 34); ctx.stroke();
+        var on = darkness(hourWIB()) > 0.15;
+        ctx.fillStyle = on ? '#ffe9a0' : '#ddd'; ctx.beginPath(); ctx.arc(x, y - 36, 4, 0, 7); ctx.fill();
+        if (on) lampGlows.push([x, y - 36]);
+        break;
+      }
+      case 'gate': {
+        var g1 = P(o.x, o.y), g2 = P(o.x2, o.y), gh = 46;
+        [g1, g2].forEach(function (g) { poly([[g[0] - 5, g[1]], [g[0] + 5, g[1] + 3], [g[0] + 5, g[1] + 3 - gh], [g[0] - 5, g[1] - gh]], '#2f4a3a', '#1d3026'); });
+        var b1x = P(o.x - 0.6, o.y, gh + 14), b2x = P(o.x2 + 0.6, o.y, gh + 14), b3x = P(o.x2 + 0.6, o.y, gh - 4), b4x = P(o.x - 0.6, o.y, gh - 4);
+        poly([b1x, b2x, b3x, b4x], '#2f4a3a', '#ffd76a', 1.5);
+        ctx.save();
+        ctx.translate(b4x[0], b4x[1]);
+        ctx.transform(1, 0.5, 0, 1, 0, 0);
+        ctx.fillStyle = '#ffd76a'; ctx.font = '900 9px ' + fontFamily; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('KAMPUS NETIZEN', 6, -9);
+        ctx.restore();
+        break;
+      }
+      case 'sign': {
+        ctx.fillStyle = '#6d4c2f'; ctx.fillRect(x - 1.5, y - 16, 3, 16);
+        poly([[x - 12, y - 26], [x + 12, y - 26], [x + 12, y - 15], [x - 12, y - 15]], '#2f63b8', '#1b3d75');
+        break;
+      }
+    }
+  }
+
+  function drawPlayer(p, now, raining) {
+    var s = P(p.x, p.y), x = s[0], y = s[1], L = p.look;
+    var t = now / 90 + L.phase, bob = p.moving ? Math.abs(Math.sin(t)) * 2 : 0, step = p.moving ? Math.sin(t) * 2.5 : 0;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x, y, 7, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(x - 3.5, y - 7 + Math.max(0, step), 3, 7 - Math.max(0, step));
+    ctx.fillRect(x + 0.5, y - 7 + Math.max(0, -step), 3, 7 - Math.max(0, -step));
+    ctx.fillStyle = L.shirt; roundRect(x - 5.5, y - 18 - bob, 11, 12, 3); ctx.fill();
+    if (L.tie || L.toga) { ctx.fillStyle = L.toga ? '#c9a227' : '#fff'; ctx.fillRect(x - 0.8, y - 17 - bob, 1.6, 7); }
+    ctx.fillStyle = L.skin; ctx.beginPath(); ctx.arc(x, y - 23 - bob, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#2b1d14'; ctx.beginPath(); ctx.arc(x, y - 24.5 - bob, 5, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.fillRect(x + p.dir * 2 - 0.6, y - 23.5 - bob, 1.3, 1.6);
+    if (L.toga && !raining) { // topi toga Rektor
+      poly([[x - 8, y - 28.5 - bob], [x, y - 25 - bob], [x + 8, y - 28.5 - bob], [x, y - 32 - bob]], '#111');
+      ctx.strokeStyle = '#c9a227'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y - 28.5 - bob); ctx.lineTo(x + 6, y - 24 - bob); ctx.stroke();
+    }
+    if (raining) {
+      var ux = x + p.dir * 3, uy = y - 33 - bob;
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ux, uy); ctx.lineTo(ux, uy + 14); ctx.stroke();
+      ctx.fillStyle = L.umb; ctx.beginPath(); ctx.arc(ux, uy + 1, 11, Math.PI, 0); ctx.closePath(); ctx.fill();
+    }
+    if (p.isMe) { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y, 9, 4.2, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+  }
+
+  function cmp(a, b) {
+    if (a.isPlayer && b.isBox) return playerVsBox(a, b);
+    if (b.isPlayer && a.isBox) return -playerVsBox(b, a);
+    return a.depth - b.depth;
+  }
+  function playerVsBox(p, o) {
+    var nx = clamp(p.x, o.x, o.x + o.w), ny = clamp(p.y, o.y, o.y + o.h);
+    return (p.x + p.y) - (nx + ny) || 1;
+  }
+  function darkness(h) {
+    if (h >= 6.5 && h < 17) return 0;
+    if (h >= 17 && h < 19) return (h - 17) / 2 * 0.5;
+    if (h >= 5 && h < 6.5) return (6.5 - h) / 1.5 * 0.5;
+    return 0.5;
+  }
+
+  var drops = [];
+  for (var di = 0; di < 160; di++) drops.push({ x: Math.random(), y: Math.random(), l: 8 + Math.random() * 10, v: 0.8 + Math.random() * 0.6 });
+  var lampGlows = [];
+  var camX = 0, camY = 0, weather = 'CERAH', fontFamily = 'system-ui';
+
+  function allPlayers() {
+    var arr = [me];
+    peers.forEach(function (p) { if (p.hasPos) arr.push(p); });
+    bots.forEach(function (b) { arr.push(b); });
+    if (!realRektorOnline()) arr.push(rektor);
+    return arr;
+  }
+
+  function render(now, dt) {
+    weather = World.weatherAt(Date.now());
+    var raining = weather === 'HUJAN';
+    var dk = darkness(hourWIB()), night = dk > 0.22;
+    var tgt = P(me.x, me.y); camX = tgt[0] + camOff.x; camY = tgt[1] - 20 + camOff.y;
+    var z = zoom;
+    function worldTf() { ctx.setTransform(DPR * z, 0, 0, DPR * z, DPR * (W / 2 - camX * z), DPR * (H / 2 - camY * z)); }
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = '#68a054'; ctx.fillRect(0, 0, W, H);
+    worldTf();
+    var vl = camX - W / 2 / z - 40, vr = camX + W / 2 / z + 40, vt = camY - H / 2 / z - 40, vb = camY + H / 2 / z + 80;
+    drawTiles(vl, vr, vt, vb, now);
+
+    var list = [], objs = world.objects;
+    for (var i = 0; i < objs.length; i++) {
+      var o = objs[i];
+      if (o.sx < vl - 260 || o.sx > vr + 260 || o.sy < vt - 40 || o.sy > vb + 160) continue;
+      list.push(o);
+    }
+    var vis = [];
+    allPlayers().forEach(function (p) {
+      var s = P(p.x, p.y);
+      if (s[0] < vl || s[0] > vr || s[1] < vt || s[1] > vb + 60) return;
+      p.isPlayer = true; p.depth = p.x + p.y; list.push(p); vis.push(p);
+    });
+    list.sort(cmp);
+    nightWindows.length = 0; lampGlows.length = 0;
+    for (var j = 0; j < list.length; j++) {
+      var d = list[j];
+      if (d.isPlayer) drawPlayer(d, now, raining);
+      else if (d.isBox) drawBuilding(d, night);
+      else if (d.type === 'tree') drawTree(d);
+      else drawProp(d, now);
+    }
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    var h = hourWIB();
+    if (h >= 16.5 && h < 18.5) { ctx.fillStyle = 'rgba(255,140,60,' + (0.12 * (1 - Math.abs(h - 17.5))) + ')'; ctx.fillRect(0, 0, W, H); }
+    if (dk > 0) { ctx.fillStyle = 'rgba(14,22,58,' + dk + ')'; ctx.fillRect(0, 0, W, H); }
+    if (weather !== 'CERAH') { ctx.fillStyle = raining ? 'rgba(60,70,85,.22)' : 'rgba(90,100,110,.1)'; ctx.fillRect(0, 0, W, H); }
+    if (night) {
+      worldTf();
+      ctx.globalAlpha = 0.85; nightWindows.forEach(function (q) { poly(q, '#ffd76a'); }); ctx.globalAlpha = 1;
+      lampGlows.forEach(function (g) {
+        var gr = ctx.createRadialGradient(g[0], g[1], 0, g[0], g[1], 40);
+        gr.addColorStop(0, 'rgba(255,225,140,.45)'); gr.addColorStop(1, 'rgba(255,225,140,0)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(g[0], g[1], 40, 0, 7); ctx.fill();
+      });
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    if (raining) {
+      ctx.strokeStyle = 'rgba(210,225,255,.55)'; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (var r = 0; r < drops.length; r++) {
+        var dr = drops[r]; dr.y += dr.v * dt * 1.4; dr.x -= dr.v * dt * 0.25;
+        if (dr.y > 1) { dr.y -= 1; dr.x = Math.random() * 1.1; }
+        if (dr.x < 0) dr.x += 1.1;
+        var px = dr.x * W, py = dr.y * H; ctx.moveTo(px, py); ctx.lineTo(px - dr.l * 0.25, py + dr.l);
+      }
+      ctx.stroke();
+    }
+    if (audio) audio.gain.gain.value = soundOn ? (raining ? 0.12 : 0.025) : 0;
+
+    drawSigns(list, z);
+    for (var n = 0; n < vis.length; n++) drawLabels(vis[n], z);
+  }
+
+  function toScreen(wx, wy) { return [(wx - camX) * zoom + W / 2, (wy - camY) * zoom + H / 2]; }
+  function pill(text, cx, cy, opt) {
+    ctx.font = '800 ' + (opt.size || 13) + 'px ' + fontFamily;
+    var dot = opt.dot ? 12 : 0;
+    var w = ctx.measureText(text).width + (opt.padX || 9) * 2 + dot, h = opt.h || 22;
+    roundRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+    ctx.fillStyle = opt.bg; ctx.fill();
+    ctx.lineWidth = opt.lw || 1.5; ctx.strokeStyle = opt.border; ctx.stroke();
+    if (dot) { ctx.fillStyle = opt.dot; ctx.beginPath(); ctx.arc(cx - w / 2 + (opt.padX || 9) + 4, cy, 4.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = opt.color || '#1f2a24'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx + dot / 2, cy + 0.5);
+  }
+  function drawSigns(list, z) {
+    if (z < 0.5) return;
+    for (var i = 0; i < list.length; i++) {
+      var o = list[i];
+      if (!o.name || o.isPlayer) continue;
+      var top = o.isBox ? P(o.cx, o.cy, (o.height || 16) + (o.roofType === 'hip' ? Math.min(o.w, o.h) * 8 : 0) + (o.kind === 'stage' ? 34 : 12)) : P(o.x, o.y, 34);
+      var s = toScreen(top[0], top[1]);
+      var jc = o.jurusan ? JMAP[o.jurusan].color : (o.kind === 'rektorat' ? '#c9a227' : '#8a6240');
+      pill(o.name, s[0], s[1], { bg: '#fff8e6', border: jc, size: o.kind === 'fakultas' || o.kind === 'rektorat' ? 12 : 11, h: 21, lw: 2.5, padX: 8 });
+    }
+  }
+  function wrap(text, max) {
+    var words = text.split(' '), lines = [], cur = '';
+    for (var i = 0; i < words.length; i++) {
+      var t = cur ? cur + ' ' + words[i] : words[i];
+      if (t.length > max && cur) { lines.push(cur); cur = words[i]; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    if (lines.length > 2) { lines = lines.slice(0, 2); lines[1] = lines[1].slice(0, max - 1) + '…'; }
+    return lines.map(function (l) { return l.length > max + 6 ? l.slice(0, max + 5) + '…' : l; });
+  }
+  function labelStyle(p) {
+    var m = p.meta;
+    if (m && m.role === 'rektor') return { bg: '#2d1b5e', border: '#ffd76a', color: '#ffd76a', size: 13, lw: 2 };
+    var j = m && JMAP[m.jurusan];
+    if (m && (m.is_dekan || m.role === 'dekan')) return { bg: shade(j.color, 0.78), border: j.color, color: shade(j.color, -0.55), size: 12, lw: 2 };
+    if (j) return { bg: '#fff', border: p.isMe ? '#2f4a3a' : '#5a5a5a', lw: p.isMe ? 2.5 : 1.5, size: 13, dot: j.color };
+    return { bg: '#fff', border: p.isMe ? '#2f4a3a' : '#8a8a8a', lw: p.isMe ? 2.5 : 1.5, size: 13, color: '#444' };
+  }
+  function drawLabels(p, z) {
+    var lift = weather === 'HUJAN' ? 48 : (p.look.toga ? 40 : 34);
+    var s = P(p.x, p.y, lift), sc = toScreen(s[0], s[1]), x = sc[0], y = sc[1] - 6;
+    if (z >= 0.45 || p.isMe) pill(p.label || '…', x, y, labelStyle(p));
+    if (p.chat && p.chat.until > Date.now()) {
+      var lines = wrap(p.chat.text, 24);
+      ctx.font = '700 13px ' + fontFamily;
+      var w = 0; lines.forEach(function (l) { w = Math.max(w, ctx.measureText(l).width); });
+      w += 20; var h = lines.length * 17 + 12, bx = x - w / 2, by = y - 16 - h;
+      roundRect(bx, by, w, h, 12); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 6, by + h - 1); ctx.lineTo(x, by + h + 7); ctx.lineTo(x + 6, by + h - 1); ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - 6, by + h); ctx.lineTo(x, by + h + 7); ctx.lineTo(x + 6, by + h); ctx.stroke();
+      ctx.fillStyle = '#1f2a24'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      lines.forEach(function (l, i) { ctx.fillText(l, x, by + 14 + i * 17); });
+    }
+  }
+
+  // ---------- HUD ----------
+  function phaseName(h) { return h >= 4 && h < 10 ? 'PAGI' : h >= 10 && h < 15 ? 'SIANG' : h >= 15 && h < 18 ? 'SORE' : 'MALAM'; }
+  var WX_ICON = { CERAH: '☀️', BERAWAN: '⛅', HUJAN: '🌧️' };
+  function hud() {
+    var fd = fmtDate(); if (W < 430) fd = fd.replace(/ \d{4}$/, '');
+    $('datetime').textContent = fd + ' · ' + fmtTime();
+    var w = World.weatherAt(Date.now());
+    var ph = phaseName(hourWIB()); $('phase').textContent = ph + ' · ' + (ph === 'MALAM' && w === 'CERAH' ? '🌙' : WX_ICON[w]) + ' ' + w;
+    $('onlineTxt').textContent = stats.online + (W < 430 ? ' online' : ' mahasiswa online');
+    $('wargaNum').textContent = Number(stats.mahasiswa).toLocaleString('id-ID');
+    $('wargaUpd').textContent = 'diperbarui ' + fmtDate(stats.updated).slice(5) + ' · ' + fmtTime(stats.updated);
+  }
+  setInterval(hud, 1000);
+  var toastTimer = null;
+  function toast(t) {
+    var e = $('toast'); e.textContent = t; e.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { e.classList.remove('show'); }, 3600);
+  }
+
+  // ---------- panel ----------
+  var currentTab = null, sheet = $('sheet'), body = $('sheetBody');
+  var TITLES = { info: 'Info Kampus', ktm: 'Kartu Tanda Mahasiswa', jurusan: 'Jurusan', kantin: 'Kantin Kampus', akun: 'Akun', chat: 'Obrolan Kampus', dekat: 'Mahasiswa di Dekatmu' };
+  function openPanel(tab) {
+    currentTab = tab;
+    $('sheetTitle').textContent = TITLES[tab] || '';
+    sheet.classList.add('open');
+    document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
+    if (!document.querySelector('#nav button.active')) document.querySelector('#nav button[data-tab="peta"]').classList.add('active');
+    if (tab === 'info') $('infoDot').style.display = 'none';
+    refreshPanel();
+    if (tab === 'chat') setTimeout(function () { var i = $('chatInput'); if (i) i.focus(); }, 260);
+  }
+  function closePanel() {
+    currentTab = null; sheet.classList.remove('open');
+    document.querySelectorAll('#nav button').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === 'peta'); });
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+  $('sheetClose').onclick = closePanel;
+  document.querySelectorAll('#nav button').forEach(function (b) {
+    b.onclick = function () { if (b.dataset.tab === 'peta') closePanel(); else openPanel(b.dataset.tab); };
+  });
+  var keepForm = null; // simpan isian form KTM saat panel di-refresh
+  function refreshPanel() {
+    if (!currentTab) return;
+    if (currentTab === 'chat' && $('chatLog')) { renderChatLog(); return; }
+    body.innerHTML = '';
+    var f = PANELS[currentTab]; if (f) f(body);
+  }
+  function renderChatLog() {
+    var log = $('chatLog'); if (!log) return;
+    log.innerHTML = '';
+    if (!chatLog.length) log.appendChild(el('p', { cls: 'muted', text: 'Belum ada obrolan. Sapa yang lain duluan!' }));
+    chatLog.forEach(function (c) {
+      var j = c.jurusan && JMAP[c.jurusan];
+      log.appendChild(el('div', { cls: 'msg' }, [j ? el('span', { cls: 'jdot', style: 'background:' + j.color }) : null, el('b', { text: c.name }), c.text, el('span', { cls: 'meta', text: '  ' + fmtTime(c.at) })]));
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+  function busy(btn, on, text) { btn.disabled = on; if (text) btn.textContent = text; btn.style.opacity = on ? 0.6 : 1; }
+  var GOOGLE_SVG = '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+  function googleBtn(text, onclick) { var b = el('button', { cls: 'btn google', onclick: onclick }); b.innerHTML = GOOGLE_SVG; b.appendChild(document.createTextNode(text)); return b; }
+  function needGoogle() { return net.mode === 'online' && CFG.WAJIB_GOOGLE_UNTUK_KTM && me.isAnon; }
+
+  var PANELS = {
+    info: function (b) {
+      if (me.profile && me.profile.role === 'rektor') {
+        var ju = el('input', { type: 'text', maxlength: '80', placeholder: 'Judul pengumuman' });
+        var isi = el('textarea', { maxlength: '500', placeholder: 'Isi pengumuman untuk seluruh kampus…' });
+        var bt = el('button', { cls: 'btn', text: 'Umumkan 📣' });
+        bt.onclick = function () {
+          if (!ju.value.trim() || !isi.value.trim()) { toast('Isi judul dan isinya'); return; }
+          busy(bt, true); net.postPengumuman(ju.value.trim(), isi.value.trim()).then(function () { toast('Pengumuman terkirim'); }).catch(function (e) { toast(Net.errMsg(e)); }).then(function () { busy(bt, false); });
+        };
+        b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: '👑 Pengumuman Rektor' }), el('div', { style: 'display:grid;gap:8px;margin-top:6px' }, [ju, isi, bt])]));
+      }
+      pengumuman.forEach(function (a) { b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: a.judul }), el('p', { text: a.isi }), el('div', { cls: 'meta', text: fmtDate(a.at) })])); });
+      b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: 'Cara main' }),
+        el('p', { text: 'Geser joystick "Gerak" (atau panah/WASD) untuk jalan. Seret peta untuk melihat-lihat. Tekan CHAT untuk ngobrol. Bikin KTM untuk masuk jurusan — mahasiswa pertama tiap jurusan jadi Dekan.' })]));
+    },
+    ktm: function (b) {
+      if (!me.profile) {
+        var form = keepForm || (keepForm = { nama: '', jurusan: null });
+        b.appendChild(el('p', { cls: 'muted', text: 'Pilih jurusanmu. Mahasiswa pertama di sebuah jurusan otomatis jadi Dekan.' }));
+        var inp = el('input', { type: 'text', maxlength: '20', placeholder: 'Nama panggilan', autocomplete: 'off', value: form.nama });
+        inp.addEventListener('input', function () { form.nama = inp.value; });
+        b.appendChild(inp);
+        var grid = el('div', { cls: 'jgrid' });
+        World.JURUSAN.forEach(function (j) {
+          var btn = el('button', { cls: 'jbtn' + (form.jurusan === j.id ? ' sel' : ''), style: '--jc:' + j.color, type: 'button' }, [el('span', { cls: 'e', text: j.emoji }), el('span', {}, [j.nama, el('small', { text: j.fak })])]);
+          btn.onclick = function () { form.jurusan = j.id; grid.querySelectorAll('.jbtn').forEach(function (x) { x.classList.remove('sel'); }); btn.classList.add('sel'); };
+          grid.appendChild(btn);
+        });
+        b.appendChild(grid);
+        function submit(btn) {
+          if (form.nama.trim().length < 2) { toast('Nama minimal 2 huruf'); return; }
+          if (!form.jurusan) { toast('Pilih jurusan dulu'); return; }
+          busy(btn, true);
+          net.daftarKTM(form.nama.trim(), form.jurusan).then(function (p) { if (p) keepForm = null; })
+            .catch(function (e) { toast(Net.errMsg(e)); }).then(function () { busy(btn, false); });
+        }
+        var go = needGoogle() ? googleBtn('Bikin KTM dengan Google', function () { submit(go); }) : el('button', { cls: 'btn wide', text: 'Bikin KTM 🎓', onclick: function () { submit(go); } });
+        b.appendChild(go);
+        if (needGoogle()) b.appendChild(el('p', { cls: 'muted', style: 'margin-top:8px', text: 'Akun Google menjaga KTM-mu tetap aman walau ganti HP. Sebelum itu kamu tetap bisa jalan-jalan sebagai tamu.' }));
+        if (net.mode === 'online' && me.isAnon) {
+          b.appendChild(el('div', { cls: 'divider', text: '— sudah punya KTM? —' }));
+          b.appendChild(googleBtn('Masuk dengan Google', function () { net.loginGoogle().catch(function (e) { toast(Net.errMsg(e)); }); }));
+        }
+        if (net.mode === 'demo') b.appendChild(el('p', { cls: 'muted', style: 'margin-top:8px', text: 'Mode demo: KTM disimpan di browser ini saja. Login Google aktif setelah Supabase dipasang.' }));
+        return;
+      }
+      var p = me.profile, j = JMAP[p.jurusan];
+      var status = p.role === 'rektor' ? '👑 Rektor' : (p.is_dekan ? 'Dekan ' + j.nama : 'Mahasiswa aktif');
+      b.appendChild(el('div', { cls: 'ktm', style: '--jc:' + (p.role === 'rektor' ? '#3b2a7a' : j.color) }, [
+        el('div', { cls: 'bar' }),
+        el('div', { cls: 't', text: 'KARTU TANDA MAHASISWA' }),
+        el('div', { cls: 'u', text: '🎓 KAMPUS NETIZEN' }),
+        el('div', { cls: 'photo', text: j.emoji }),
+        el('table', {}, [tr('NIM', p.nim), tr('Nama', p.nama), tr('Jurusan', j.nama), tr('Fakultas', j.fak), tr('Angkatan', p.angkatan || new Date(p.created_at).getFullYear()), tr('Status', status)])
+      ]));
+      b.appendChild(el('div', { cls: 'row', style: 'margin-top:12px' }, [el('button', { cls: 'btn', text: j.emoji + ' Ke fakultas', onclick: function () { goFakultas(); closePanel(); } })]));
+      function tr(k, v) { return el('tr', {}, [el('td', { text: k }), el('td', { text: String(v) })]); }
+    },
+    jurusan: function (b) {
+      var holder = el('div', {}, [el('p', { cls: 'muted', text: 'Memuat data jurusan…' })]);
+      if (me.profile) {
+        var j = JMAP[me.profile.jurusan], teman = [];
+        peers.forEach(function (p) { if (p.hasPos && p.jurusan === j.id) teman.push(p); });
+        bots.forEach(function (p) { if (p.jurusan === j.id) teman.push(p); });
+        b.appendChild(el('div', { cls: 'item' }, [el('h3', {}, [el('span', { cls: 'jdot', style: 'background:' + j.color }), j.emoji + ' ' + j.nama]),
+          el('p', { text: j.fak + ' · ' + teman.length + ' teman sejurusan sedang di kampus.' })]));
+        teman.slice(0, 20).forEach(function (o) {
+          b.appendChild(el('div', { cls: 'item row' }, [el('div', {}, [el('h3', { text: o.label }), el('div', { cls: 'meta', text: jarak(o) })]),
+            el('button', { cls: 'btn small alt', text: 'Sapa', onclick: function () { sendChat('Halo ' + o.name + ' 👋'); closePanel(); } })]));
+        });
+      } else {
+        b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: 'Belum punya jurusan' }), el('p', { text: 'Bikin KTM untuk masuk jurusan.' })]));
+        b.appendChild(el('button', { cls: 'btn wide', text: 'Bikin KTM', onclick: function () { openPanel('ktm'); } }));
+      }
+      b.appendChild(el('h3', { text: 'Semua jurusan', style: 'margin:16px 0 6px;font-size:15px' }));
+      b.appendChild(holder);
+      net.statJurusan().then(function (rows) {
+        var map = {}; (rows || []).forEach(function (r) { map[r.jurusan] = r; });
+        holder.innerHTML = '';
+        World.JURUSAN.forEach(function (jj) {
+          var r = map[jj.id] || { jumlah: 0, dekan: null };
+          holder.appendChild(el('div', { cls: 'item' }, [el('h3', {}, [el('span', { cls: 'jdot', style: 'background:' + jj.color }), jj.emoji + ' ' + jj.nama]),
+            el('div', { cls: 'meta', text: Number(r.jumlah).toLocaleString('id-ID') + ' mahasiswa · Dekan: ' + (r.dekan || 'belum ada — daftar sekarang!') })]));
+        });
+      }).catch(function (e) { holder.innerHTML = ''; holder.appendChild(el('p', { cls: 'muted', text: Net.errMsg(e) })); });
+    },
+    kantin: function (b) {
+      if (me.profile) {
+        var it = el('input', { type: 'text', maxlength: '60', placeholder: 'Mau jual apa?' });
+        var pr = el('input', { type: 'number', min: '0', placeholder: 'Harga (Rp)', inputmode: 'numeric' });
+        var bt = el('button', { cls: 'btn', text: 'Pajang' });
+        bt.onclick = function () {
+          var barang = it.value.trim(), harga = Math.max(0, Math.min(1e9, parseInt(pr.value, 10) || 0));
+          if (!barang) { toast('Isi nama barangnya'); return; }
+          busy(bt, true);
+          net.jual(barang, harga).then(function () { toast('Barang dipajang di Kantin 🍜'); }).catch(function (e) { toast(Net.errMsg(e)); }).then(function () { busy(bt, false); });
+        };
+        b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: 'Jualan' }), el('div', { style: 'display:grid;gap:8px;margin-top:6px' }, [it, el('div', { cls: 'row' }, [pr, bt])])]));
+      } else b.appendChild(el('p', { cls: 'muted', text: 'Bikin KTM dulu untuk bisa jualan. Lihat-lihat boleh kok.' }));
+      if (!kantin.length) b.appendChild(el('p', { cls: 'muted', text: 'Belum ada jualan. Jadilah yang pertama!' }));
+      kantin.forEach(function (m) {
+        var j = m.jurusan && JMAP[m.jurusan];
+        var act = m.mine
+          ? el('button', { cls: 'btn small alt', text: 'Hapus', onclick: function () { net.hapusJualan(m.id).catch(function (e) { toast(Net.errMsg(e)); }); } })
+          : el('button', { cls: 'btn small alt', text: 'Tanya', onclick: function () { sendChat('@' + m.seller + ' ' + m.barang + ' masih ada?'); closePanel(); } });
+        b.appendChild(el('div', { cls: 'item row' }, [
+          el('div', {}, [el('h3', { text: m.barang }), el('div', { cls: 'meta' }, [j ? el('span', { cls: 'jdot', style: 'background:' + j.color }) : null, rupiah(m.harga) + ' · ' + m.seller + ' · ' + fmtDate(m.at)])]),
+          act
+        ]));
+      });
+    },
+    akun: function (b) {
+      var status = net.mode === 'demo' ? 'Mode demo (offline) — mahasiswa lain adalah bot' : (me.isAnon ? 'Masuk sebagai tamu' : 'Masuk dengan Google' + (me.email ? ' (' + me.email + ')' : ''));
+      b.appendChild(el('div', { cls: 'item' }, [el('h3', { text: me.label }), el('p', { text: me.profile ? (JMAP[me.profile.jurusan].nama + ' · NIM ' + me.profile.nim) : 'Belum punya KTM' }), el('div', { cls: 'meta', text: status })]));
+      if (net.mode === 'online' && me.isAnon) b.appendChild(googleBtn('Masuk dengan Google', function () { net.loginGoogle().catch(function (e) { toast(Net.errMsg(e)); }); }));
+      b.appendChild(el('div', { cls: 'row', style: 'margin:10px 0' }, [el('button', { cls: 'btn alt', text: soundOn ? '🔊 Suara: nyala' : '🔇 Suara: mati', onclick: function () { $('soundBtn').click(); refreshPanel(); } })]));
+      if (me.profile || !me.isAnon) {
+        var out = el('button', { cls: 'btn alt wide', text: 'Keluar' });
+        var armed = 0;
+        out.onclick = function () {
+          if (Date.now() - armed > 4000) { armed = Date.now(); toast(net.mode === 'demo' ? 'Tekan lagi: KTM demo di browser ini akan dihapus' : 'Tekan sekali lagi untuk keluar'); return; }
+          net.logout();
+        };
+        b.appendChild(out);
+      }
+      b.appendChild(el('p', { cls: 'muted', style: 'margin-top:14px' }, ['Kampus Netizen · kampus virtual. ', el('a', { href: 'privasi.html', target: '_blank', text: 'Kebijakan Privasi' })]));
+    },
+    chat: function (b) {
+      b.appendChild(el('div', { id: 'chatLog' }));
+      var inp = el('input', { type: 'text', id: 'chatInput', maxlength: '120', placeholder: 'Ketik pesan…', autocomplete: 'off', enterkeyhint: 'send' });
+      function go() { sendChat(inp.value); inp.value = ''; }
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+      b.appendChild(el('div', { cls: 'row', style: 'margin-top:10px' }, [inp, el('button', { cls: 'btn small', text: 'Kirim', onclick: go })]));
+      renderChatLog();
+    },
+    dekat: function (b) {
+      var arr = [];
+      allPlayers().forEach(function (p) { if (p === me) return; var d = Math.hypot(p.x - me.x, p.y - me.y); if (d < 20) arr.push([d, p]); });
+      arr.sort(function (a, c) { return a[0] - c[0]; });
+      if (!arr.length) b.appendChild(el('p', { cls: 'muted', text: 'Sepi… belum ada yang di sekitarmu.' }));
+      arr.slice(0, 30).forEach(function (a) {
+        var p = a[1], j = p.jurusan && JMAP[p.jurusan];
+        b.appendChild(el('div', { cls: 'item row' }, [el('div', {}, [el('h3', {}, [j ? el('span', { cls: 'jdot', style: 'background:' + j.color }) : null, p.label]), el('div', { cls: 'meta', text: (j ? j.nama + ' · ' : '') + jarak(p) })]),
+          el('button', { cls: 'btn small alt', text: 'Sapa', onclick: function () { sendChat('Halo ' + p.name + ' 👋'); closePanel(); } })]));
+      });
+    }
+  };
+  function jarak(p) { return '± ' + Math.round(Math.hypot(p.x - me.x, p.y - me.y) * 5) + ' m dari kamu'; }
+
+  // ---------- mulai ----------
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    update(dt, now);
+    render(now, dt);
+    requestAnimationFrame(frame);
+  }
+  fontFamily = getComputedStyle(document.body).fontFamily;
+  hud();
+  net.start().catch(function (e) { console.error(e); toast('Gagal terhubung: ' + Net.errMsg(e)); });
+  requestAnimationFrame(frame);
+
+  window.KN = { world: world, me: me, peers: peers, bots: bots, openPanel: openPanel, setZoom: setZoom, net: net, sendChat: sendChat };
+})();
+
+</script>
+</body>
+</html>
